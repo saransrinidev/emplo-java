@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import { Bell, Menu } from "lucide-react";
 import Sidebar from "./Sidebar";
 import CommandPalette from "./CommandPalette";
+import AppTour from "./AppTour";
 import { useSidebar } from "../context/SidebarContext";
 import { useAuth } from "../context/AuthContext";
 import { notificationsApi } from "../api/notifications";
@@ -57,6 +58,7 @@ export default function Layout() {
         </div>
         <Outlet />
       </main>
+      <AppTour />
     </div>
   );
 }

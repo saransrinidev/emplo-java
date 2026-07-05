@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -33,6 +34,12 @@ public class EmployeeController {
             @RequestParam(value = "q", required = false) String query) {
         User user = currentUserProvider.getCurrentUser();
         return ResponseEntity.ok(employeeService.listWithRoles(user, query));
+    }
+
+    @GetMapping("/next-code")
+    public ResponseEntity<Map<String, String>> getNextEmployeeCode() {
+        User user = currentUserProvider.getCurrentUser();
+        return ResponseEntity.ok(Map.of("employee_code", employeeService.generateNextCode()));
     }
 
     @GetMapping("/{employeeId}")

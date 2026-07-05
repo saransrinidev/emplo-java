@@ -37,6 +37,8 @@ public class EmployeeService {
     private final AuditService auditService;
     private final AuthorizationService authorizationService;
     private final NotificationService notificationService;
+    private final OnboardingService onboardingService;
+    private final SalaryStructureService salaryStructureService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -178,6 +180,22 @@ public class EmployeeService {
         changes.put("email", employee.getEmail());
         changes.put("initial_salary", request.getInitialSalary() != null ? request.getInitialSalary().toString() : null);
         auditService.logAction(currentUser.getId(), "create", "employee", employee.getId().toString(), changes);
+
+        // Auto-initialize onboarding checklist for the new employee
+        try {
+            onboardingService.initializeOnboarding(employee.getId());
+        } catch (Exception ignored) {
+            // Non-critical: if no templates exist yet, skip silently
+        }
+
+        // Auto-generate salary structure if initial salary is provided
+        if (request.getInitialSalary() != null && request.getInitialSalary().compareTo(BigDecimal.ZERO) > 0) {
+            try {
+                salaryStructureService.autoGenerateStructure(employee.getId(), request.getInitialSalary());
+            } catch (Exception ignored) {
+                // Non-critical
+            }
+        }
 
         return toEmployeeResponse(employee);
     }
@@ -518,6 +536,24 @@ public class EmployeeService {
                 .role(newRole.getName().name())
                 .employeeId(employee.getId().toString())
                 .build();
+    }
+
+    // ─── Generate next employee code ────────────────────────────────────────────
+
+    public String generateNextCode() {
+        List<Employee> allEmployees = employeeRepository.findAll();
+        int maxNum = 0;
+        for (Employee emp : allEmployees) {
+            String code = emp.getEmployeeCode();
+            if (code != null && code.startsWith("EMP-")) {
+                try {
+                    int num = Integer.parseInt(code.substring(4));
+                    if (num > maxNum) maxNum = num;
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        return String.format("EMP-%04d", maxNum + 1);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────────

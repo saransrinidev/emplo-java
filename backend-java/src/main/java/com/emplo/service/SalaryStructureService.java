@@ -52,6 +52,10 @@ public class SalaryStructureService {
         return salaryStructureRepository.findByEmployeeId(user.getEmployeeId()).orElse(null);
     }
 
+    public SalaryStructure getSalaryStructureByEmployeeId(UUID employeeId) {
+        return salaryStructureRepository.findByEmployeeId(employeeId).orElse(null);
+    }
+
     public SalaryStructure getSalaryStructure(User user, UUID employeeId) {
         authorizationService.requireViewEmployee(user, employeeId);
         return salaryStructureRepository.findByEmployeeId(employeeId).orElse(null);
@@ -141,5 +145,107 @@ public class SalaryStructureService {
             }
         }
         return sum;
+    }
+
+    /**
+     * Auto-generate a salary structure based on standard Indian payroll norms.
+     * Called when an employee is created with an initial salary (annual CTC).
+     *
+     * Standard breakdown:
+     * - Basic Pay: 40% of gross
+     * - HRA: 20% of gross
+     * - Special Allowance: 20% of gross
+     * - Conveyance Allowance: 5% of gross
+     * - Medical Allowance: 5% of gross
+     * - Other Allowances: 10% of gross
+     *
+     * Deductions:
+     * - Employee PF: 12% of basic
+     * - Professional Tax: ₹200/month
+     *
+     * Employer Contributions:
+     * - Employer PF: 12% of basic
+     * - Gratuity: 4.81% of basic
+     */
+    @Transactional
+    public SalaryStructure autoGenerateStructure(UUID employeeId, BigDecimal annualCtc) {
+        // Don't overwrite if already exists
+        if (salaryStructureRepository.findByEmployeeId(employeeId).isPresent()) {
+            return salaryStructureRepository.findByEmployeeId(employeeId).get();
+        }
+
+        BigDecimal monthlyCtc = annualCtc.divide(BigDecimal.valueOf(12), 2, RoundingMode.HALF_UP);
+
+        // Earnings (as monthly values)
+        BigDecimal basic = monthlyCtc.multiply(BigDecimal.valueOf(0.40)).setScale(0, RoundingMode.HALF_UP);
+        BigDecimal hra = monthlyCtc.multiply(BigDecimal.valueOf(0.20)).setScale(0, RoundingMode.HALF_UP);
+        BigDecimal specialAllowance = monthlyCtc.multiply(BigDecimal.valueOf(0.20)).setScale(0, RoundingMode.HALF_UP);
+        BigDecimal conveyance = monthlyCtc.multiply(BigDecimal.valueOf(0.05)).setScale(0, RoundingMode.HALF_UP);
+        BigDecimal medical = monthlyCtc.multiply(BigDecimal.valueOf(0.05)).setScale(0, RoundingMode.HALF_UP);
+        BigDecimal otherAllowances = monthlyCtc.subtract(basic).subtract(hra)
+                .subtract(specialAllowance).subtract(conveyance).subtract(medical)
+                .max(BigDecimal.ZERO).setScale(0, RoundingMode.HALF_UP);
+
+        Map<String, Object> earnings = new LinkedHashMap<>();
+        earnings.put("basic_pay", basic.intValue());
+        earnings.put("hra", hra.intValue());
+        earnings.put("dearness_allowance", 0);
+        earnings.put("special_allowance", specialAllowance.intValue());
+        earnings.put("conveyance_allowance", conveyance.intValue());
+        earnings.put("medical_allowance", medical.intValue());
+        earnings.put("internet_allowance", 0);
+        earnings.put("telephone_allowance", 0);
+        earnings.put("food_allowance", 0);
+        earnings.put("shift_allowance", 0);
+        earnings.put("performance_bonus", 0);
+        earnings.put("incentives", 0);
+        earnings.put("overtime", 0);
+        earnings.put("other_allowances", otherAllowances.intValue());
+
+        // Deductions
+        BigDecimal employeePf = basic.multiply(BigDecimal.valueOf(0.12)).setScale(0, RoundingMode.HALF_UP);
+        BigDecimal professionalTax = BigDecimal.valueOf(200);
+
+        Map<String, Object> deductions = new LinkedHashMap<>();
+        deductions.put("employee_pf", employeePf.intValue());
+        deductions.put("employee_esi", 0);
+        deductions.put("professional_tax", professionalTax.intValue());
+        deductions.put("income_tax_tds", 0);
+        deductions.put("labour_welfare_fund", 0);
+        deductions.put("nps_employee", 0);
+        deductions.put("insurance_deduction", 0);
+        deductions.put("loan_recovery", 0);
+        deductions.put("advance_recovery", 0);
+        deductions.put("other_deductions", 0);
+
+        // Employer contributions
+        BigDecimal employerPf = basic.multiply(BigDecimal.valueOf(0.12)).setScale(0, RoundingMode.HALF_UP);
+        BigDecimal gratuity = basic.multiply(BigDecimal.valueOf(0.0481)).setScale(0, RoundingMode.HALF_UP);
+
+        Map<String, Object> employerContributions = new LinkedHashMap<>();
+        employerContributions.put("employer_pf", employerPf.intValue());
+        employerContributions.put("employer_esi", 0);
+        employerContributions.put("gratuity", gratuity.intValue());
+        employerContributions.put("employer_insurance", 0);
+        employerContributions.put("employer_nps", 0);
+
+        // Calculate totals
+        Map<String, BigDecimal> totals = calculateTotals(earnings, deductions, employerContributions);
+
+        SalaryStructure structure = SalaryStructure.builder()
+                .employeeId(employeeId)
+                .effectiveDate(LocalDate.now())
+                .earnings(earnings)
+                .deductions(deductions)
+                .employerContributions(employerContributions)
+                .grossSalary(totals.get("grossSalary"))
+                .totalDeductions(totals.get("totalDeductions"))
+                .netSalary(totals.get("netSalary"))
+                .employerCost(totals.get("employerCost"))
+                .monthlyCtc(totals.get("monthlyCtc"))
+                .annualCtc(totals.get("annualCtc"))
+                .build();
+
+        return salaryStructureRepository.save(structure);
     }
 }

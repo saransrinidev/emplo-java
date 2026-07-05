@@ -78,6 +78,13 @@ const NAV_ITEMS: NavItem[] = [
     group: "workspace",
   },
   {
+    to: "/onboarding",
+    label: "Onboarding",
+    icon: <FileText />,
+    roles: ["employee", "manager", "hr_admin"],
+    group: "workspace",
+  },
+  {
     to: "/documents",
     label: "Documents",
     icon: <FileText />,
@@ -250,6 +257,7 @@ export default function Sidebar() {
                   end={item.to === "/"}
                   className="nav-link"
                   title={collapsed ? item.label : undefined}
+                  data-tour={item.to === "/" ? "dashboard" : item.to.replace("/", "")}
                 >
                   {isActive && (
                     <motion.div

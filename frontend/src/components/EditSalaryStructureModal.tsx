@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { X, Save } from "lucide-react";
+import { X, Save, CheckCircle2, TrendingUp, TrendingDown, Briefcase } from "lucide-react";
 import { salaryStructureApi, type SalaryTotals } from "../api/salaryStructure";
 import { ApiError } from "../api/client";
 
@@ -111,23 +111,26 @@ export default function EditSalaryStructureModal({ employeeId, onClose }: Props)
   };
 
   const renderSection = (
-    title: string, color: string, fields: { key: string; label: string }[],
+    title: string, color: string, icon: React.ReactNode, fields: { key: string; label: string }[],
     values: Record<string, number>, setter: React.Dispatch<React.SetStateAction<Record<string, number>>>, total: number
   ) => (
-    <div style={{ marginBottom: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-        <h4 style={{ margin: 0, fontSize: 13, fontWeight: 600, color }}>{title}</h4>
-        <span style={{ fontSize: 12, fontWeight: 700, color }}>{fmt(total)}</span>
+    <div style={{ marginBottom: 18, border: "1px solid hsl(var(--border))", borderRadius: 12, overflow: "hidden", background: "hsl(var(--card))" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 14px", borderLeft: `3px solid ${color}`, borderBottom: "1px solid hsl(var(--border) / 0.5)" }}>
+        <h4 style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--text)", display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ width: 26, height: 26, borderRadius: 7, background: `${color}18`, display: "flex", alignItems: "center", justifyContent: "center", color }}>{icon}</span>
+          {title}
+        </h4>
+        <span style={{ fontSize: 13, fontWeight: 700, color, fontVariantNumeric: "tabular-nums" }}>{fmt(total)}</span>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "6px 12px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px 14px", padding: "14px" }}>
         {fields.map(({ key, label }) => (
-          <div key={key} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <label style={{ fontSize: 11, color: "var(--text-muted)", minWidth: 90, flex: "0 0 90px" }}>{label}</label>
+          <div key={key} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <label style={{ fontSize: 11, color: "var(--text-secondary)", minWidth: 92, flex: "0 0 92px" }}>{label}</label>
             <input
               className="input"
               type="number"
               min="0"
-              style={{ height: 28, fontSize: 12, padding: "2px 8px" }}
+              style={{ height: 30, fontSize: 12, padding: "2px 8px" }}
               value={values[key] || ""}
               onChange={(e) => updateField(setter, key, e.target.value)}
               placeholder="0"
@@ -151,21 +154,25 @@ export default function EditSalaryStructureModal({ employeeId, onClose }: Props)
 
           {!loading && (
             <>
-              {/* Live Totals */}
+              {/* Live Totals — sticky summary bar */}
               {totals && (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 20, padding: 12, borderRadius: 10, background: "hsl(var(--border) / 0.2)" }}>
-                  <div><div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 600 }}>GROSS</div><div style={{ fontSize: 15, fontWeight: 700, color: "hsl(142 60% 35%)" }}>{fmt(totals.gross_salary)}</div></div>
-                  <div><div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 600 }}>NET SALARY</div><div style={{ fontSize: 15, fontWeight: 700, color: "hsl(220 70% 45%)" }}>{fmt(totals.net_salary)}</div></div>
-                  <div><div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 600 }}>ANNUAL CTC</div><div style={{ fontSize: 15, fontWeight: 700, color: "var(--text)" }}>{fmt(totals.annual_ctc)}</div></div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 20, padding: 14, borderRadius: 12, background: "hsl(var(--muted) / 0.5)", border: "1px solid hsl(var(--border))" }}>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 700, letterSpacing: "0.03em" }}>GROSS</div><div style={{ fontSize: 16, fontWeight: 700, color: "#059669", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>{fmt(totals.gross_salary)}</div></div>
+                  <div style={{ textAlign: "center", borderLeft: "1px solid hsl(var(--border))", borderRight: "1px solid hsl(var(--border))" }}><div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 700, letterSpacing: "0.03em" }}>NET SALARY</div><div style={{ fontSize: 16, fontWeight: 700, color: "#4f46e5", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>{fmt(totals.net_salary)}</div></div>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 700, letterSpacing: "0.03em" }}>ANNUAL CTC</div><div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>{fmt(totals.annual_ctc)}</div></div>
                 </div>
               )}
 
-              {renderSection("Earnings", "hsl(142 60% 35%)", EARNING_FIELDS, earnings, setEarnings, totals?.gross_salary || 0)}
-              {renderSection("Deductions", "hsl(0 60% 45%)", DEDUCTION_FIELDS, deductions, setDeductions, totals?.total_deductions || 0)}
-              {renderSection("Employer Contributions", "hsl(220 70% 45%)", EMPLOYER_FIELDS, employer, setEmployer, totals?.employer_cost || 0)}
+              {renderSection("Earnings", "#059669", <TrendingUp size={14} />, EARNING_FIELDS, earnings, setEarnings, totals?.gross_salary || 0)}
+              {renderSection("Deductions", "#dc2626", <TrendingDown size={14} />, DEDUCTION_FIELDS, deductions, setDeductions, totals?.total_deductions || 0)}
+              {renderSection("Employer Contributions", "#4f46e5", <Briefcase size={14} />, EMPLOYER_FIELDS, employer, setEmployer, totals?.employer_cost || 0)}
 
               {error && <p className="error-text" style={{ marginBottom: 12 }}>{error}</p>}
-              {success && <p style={{ color: "hsl(142 60% 35%)", fontWeight: 600, marginBottom: 12 }}>✓ Salary structure saved successfully!</p>}
+              {success && (
+                <p style={{ color: "#059669", fontWeight: 600, marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                  <CheckCircle2 size={16} /> Salary structure saved successfully!
+                </p>
+              )}
             </>
           )}
         </div>
