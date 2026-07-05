@@ -71,6 +71,8 @@ export const employeesApi = {
 
   get: (id: string) => api.get<Employee>(`/employees/${id}`),
 
+  nextCode: () => api.get<{ employee_code: string }>("/employees/next-code"),
+
   create: (data: EmployeeCreate) => api.post<Employee>("/employees", data),
 
   bulkImport: (employees: Record<string, string | null>[]) =>

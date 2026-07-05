@@ -9,6 +9,8 @@ import { ToastProvider } from "./components/Toast";
 import "./styles/global.css";
 import "./styles/components.css";
 import "./styles/compensation.css";
+import "./styles/onboarding.css";
+import "./styles/tour.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { IndianRupee, ChevronDown, ChevronRight, X, TrendingUp, TrendingDown, Wallet, Download, Briefcase } from "lucide-react";
+import { ChevronDown, ChevronRight, X, TrendingUp, TrendingDown, Wallet, Download, Briefcase, Calendar } from "lucide-react";
 import { salaryStructureApi, type SalaryStructure } from "../api/salaryStructure";
 import { payslipApi } from "../api/payslip";
 
@@ -58,37 +58,38 @@ export default function SalaryStructureModal({ employeeId, employeeName, employe
     finally { setDownloading(false); }
   };
 
-  const renderSection = (key: string, title: string, icon: React.ReactNode, color: string, bgColor: string, components: Record<string, number>, labels: Record<string, string>, total: number) => {
+  const renderSection = (key: string, title: string, icon: React.ReactNode, color: string, components: Record<string, number>, labels: Record<string, string>, total: number) => {
     const entries = Object.entries(components).filter(([_, v]) => v > 0);
+    const isOpen = expanded.has(key);
     return (
-      <div style={{ border: "1px solid hsl(var(--border))", borderRadius: 12, marginBottom: 12, overflow: "hidden" }}>
-        <button onClick={() => toggle(key)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", border: "none", background: bgColor, cursor: "pointer", fontFamily: "inherit" }}>
+      <div style={{ border: "1px solid hsl(var(--border))", borderRadius: 12, marginBottom: 12, overflow: "hidden", background: "hsl(var(--card))" }}>
+        <button onClick={() => toggle(key)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", border: "none", borderLeft: `3px solid ${color}`, background: "transparent", cursor: "pointer", fontFamily: "inherit" }}>
           <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ width: 28, height: 28, borderRadius: 8, background: `${color}15`, display: "flex", alignItems: "center", justifyContent: "center", color }}>{icon}</span>
+            <span style={{ width: 30, height: 30, borderRadius: 8, background: `${color}18`, display: "flex", alignItems: "center", justifyContent: "center", color }}>{icon}</span>
             <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{title}</span>
             <span style={{ fontSize: 12, color: "var(--text-muted)" }}>({entries.length} items)</span>
           </span>
           <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ fontSize: 14, fontWeight: 700, color }}>{fmt(total)}</span>
-            {expanded.has(key) ? <ChevronDown size={16} color="var(--text-muted)" /> : <ChevronRight size={16} color="var(--text-muted)" />}
+            {isOpen ? <ChevronDown size={16} color="var(--text-muted)" /> : <ChevronRight size={16} color="var(--text-muted)" />}
           </span>
         </button>
-        {expanded.has(key) && (
-          <div style={{ padding: "10px 16px" }}>
+        {isOpen && (
+          <div style={{ padding: "6px 16px 12px", borderTop: "1px solid hsl(var(--border) / 0.5)" }}>
             {entries.length === 0 ? (
-              <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "8px 0" }}>No components configured</p>
+              <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "12px 0" }}>No components configured</p>
             ) : (
               <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
                 <tbody>
                   {entries.map(([k, v]) => (
-                    <tr key={k} style={{ borderBottom: "1px solid hsl(var(--border) / 0.3)" }}>
-                      <td style={{ padding: "8px 0", color: "var(--text-secondary)" }}>{labels[k] || k.replace(/_/g, " ")}</td>
-                      <td style={{ padding: "8px 0", textAlign: "right", fontWeight: 600, color: "var(--text)", fontVariantNumeric: "tabular-nums" }}>{fmt(v)}</td>
+                    <tr key={k} style={{ borderBottom: "1px solid hsl(var(--border) / 0.4)" }}>
+                      <td style={{ padding: "9px 0", color: "var(--text-secondary)" }}>{labels[k] || k.replace(/_/g, " ")}</td>
+                      <td style={{ padding: "9px 0", textAlign: "right", fontWeight: 600, color: "var(--text)", fontVariantNumeric: "tabular-nums" }}>{fmt(v)}</td>
                     </tr>
                   ))}
-                  <tr style={{ borderTop: "2px solid hsl(var(--border))" }}>
-                    <td style={{ padding: "10px 0", fontWeight: 700, color: "var(--text)" }}>Total</td>
-                    <td style={{ padding: "10px 0", textAlign: "right", fontWeight: 700, color, fontSize: 14 }}>{fmt(total)}</td>
+                  <tr style={{ borderTop: `2px solid ${color}40` }}>
+                    <td style={{ padding: "11px 0", fontWeight: 700, color: "var(--text)" }}>Total</td>
+                    <td style={{ padding: "11px 0", textAlign: "right", fontWeight: 700, color, fontSize: 14, fontVariantNumeric: "tabular-nums" }}>{fmt(total)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -137,43 +138,47 @@ export default function SalaryStructureModal({ employeeId, employeeName, employe
 
           {!loading && structure && (
             <>
-              {/* Summary Grid */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 20 }}>
-                <div style={{ padding: "14px 16px", borderRadius: 12, border: "1px solid hsl(142 60% 80%)", background: "hsl(142 60% 97%)" }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "hsl(142 60% 30%)", letterSpacing: "0.04em" }}>GROSS SALARY</div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: "var(--text)", marginTop: 4 }}>{fmt(structure.gross_salary)}</div>
-                  <div style={{ fontSize: 11, color: "var(--text-muted)" }}>per month</div>
+              {/* Summary Grid — hero cards with solid gradient + white text */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, marginBottom: 14 }}>
+                <div style={{ padding: "18px 18px", borderRadius: 14, background: "linear-gradient(135deg, #059669, #10b981)", boxShadow: "0 4px 14px rgba(16,185,129,0.25)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.85)", letterSpacing: "0.04em" }}>
+                    <TrendingUp size={13} /> GROSS SALARY
+                  </div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: "#fff", marginTop: 6, fontVariantNumeric: "tabular-nums" }}>{fmt(structure.gross_salary)}</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.8)" }}>per month</div>
                 </div>
-                <div style={{ padding: "14px 16px", borderRadius: 12, border: "1px solid hsl(220 70% 80%)", background: "hsl(220 70% 97%)" }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "hsl(220 70% 40%)", letterSpacing: "0.04em" }}>NET SALARY</div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: "var(--text)", marginTop: 4 }}>{fmt(structure.net_salary)}</div>
-                  <div style={{ fontSize: 11, color: "var(--text-muted)" }}>take home</div>
+                <div style={{ padding: "18px 18px", borderRadius: 14, background: "linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow: "0 4px 14px rgba(79,70,229,0.25)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.85)", letterSpacing: "0.04em" }}>
+                    <Wallet size={13} /> NET SALARY
+                  </div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: "#fff", marginTop: 6, fontVariantNumeric: "tabular-nums" }}>{fmt(structure.net_salary)}</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.8)" }}>take home</div>
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 20 }}>
-                <div style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid hsl(var(--border))", textAlign: "center" }}>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: "var(--text-muted)" }}>DEDUCTIONS</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "hsl(0 60% 45%)" }}>{fmt(structure.total_deductions)}</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 22 }}>
+                <div style={{ padding: "12px", borderRadius: 10, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", textAlign: "center" }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.03em" }}>DEDUCTIONS</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "#dc2626", marginTop: 3, fontVariantNumeric: "tabular-nums" }}>{fmt(structure.total_deductions)}</div>
                 </div>
-                <div style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid hsl(var(--border))", textAlign: "center" }}>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: "var(--text-muted)" }}>MONTHLY CTC</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{fmt(structure.monthly_ctc)}</div>
+                <div style={{ padding: "12px", borderRadius: 10, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", textAlign: "center" }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.03em" }}>MONTHLY CTC</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", marginTop: 3, fontVariantNumeric: "tabular-nums" }}>{fmt(structure.monthly_ctc)}</div>
                 </div>
-                <div style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid hsl(var(--border))", textAlign: "center" }}>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: "var(--text-muted)" }}>ANNUAL CTC</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{fmt(structure.annual_ctc)}</div>
+                <div style={{ padding: "12px", borderRadius: 10, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", textAlign: "center" }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.03em" }}>ANNUAL CTC</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", marginTop: 3, fontVariantNumeric: "tabular-nums" }}>{fmt(structure.annual_ctc)}</div>
                 </div>
               </div>
 
               {/* Sections */}
-              {renderSection("earnings", "Earnings", <TrendingUp size={14} />, "hsl(142 60% 35%)", "hsl(142 60% 97%)", structure.earnings, EARNING_LABELS, structure.gross_salary)}
-              {renderSection("deductions", "Deductions", <TrendingDown size={14} />, "hsl(0 60% 45%)", "hsl(0 60% 97%)", structure.deductions, DEDUCTION_LABELS, structure.total_deductions)}
-              {renderSection("employer", "Employer Contributions", <Briefcase size={14} />, "hsl(220 70% 45%)", "hsl(220 70% 97%)", structure.employer_contributions, EMPLOYER_LABELS, structure.employer_cost)}
+              {renderSection("earnings", "Earnings", <TrendingUp size={15} />, "#059669", structure.earnings, EARNING_LABELS, structure.gross_salary)}
+              {renderSection("deductions", "Deductions", <TrendingDown size={15} />, "#dc2626", structure.deductions, DEDUCTION_LABELS, structure.total_deductions)}
+              {renderSection("employer", "Employer Contributions", <Briefcase size={15} />, "#4f46e5", structure.employer_contributions, EMPLOYER_LABELS, structure.employer_cost)}
 
-              <div style={{ marginTop: 8, padding: "10px 14px", borderRadius: 8, background: "hsl(var(--border) / 0.15)", fontSize: 12, color: "var(--text-muted)", display: "flex", justifyContent: "space-between" }}>
-                <span>Effective: {structure.effective_date}</span>
-                <span>Employer cost: {fmt(structure.employer_cost)}/month</span>
+              <div style={{ marginTop: 8, padding: "11px 14px", borderRadius: 10, background: "hsl(var(--muted) / 0.5)", border: "1px solid hsl(var(--border))", fontSize: 12, color: "var(--text-secondary)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 5 }}><Calendar size={12} /> Effective: {structure.effective_date}</span>
+                <span>Employer cost: <strong style={{ color: "var(--text)" }}>{fmt(structure.employer_cost)}</strong>/month</span>
               </div>
             </>
           )}

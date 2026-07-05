@@ -397,13 +397,13 @@ function EmployeeDashboard() {
           <WelcomeBanner taskCount={data.expiring_soon} />
           <div className="dashboard-grid">
             <StaggerContainer className="grid grid-cards">
-              <StaggerItem><Stat title="Designation" value={data.designation ?? "—"} icon={<Briefcase />} variant="indigo" bgClass="bg-briefcase" description="Your current role" /></StaggerItem>
-              <StaggerItem><Stat title="Date of Joining" value={data.date_of_joining ?? "—"} icon={<Calendar />} variant="blue" bgClass="bg-calendar" description="When you joined the company" /></StaggerItem>
+              <StaggerItem><Stat title="Designation" value={data.designation || "—"} icon={<Briefcase />} variant="indigo" bgClass="bg-briefcase" description="Your current role" /></StaggerItem>
+              <StaggerItem><Stat title="Date of Joining" value={data.date_of_joining || "—"} icon={<Calendar />} variant="blue" bgClass="bg-calendar" description="When you joined the company" /></StaggerItem>
               <StaggerItem><Stat title="Current Salary" value={money(data.current_salary)} icon={<DollarSign />} variant="green" bgClass="bg-salary" description="Your current compensation" /></StaggerItem>
               <StaggerItem><Stat title="Latest Rating" value={data.latest_rating ? `${data.latest_rating} / 5` : "—"} icon={<Star />} variant="yellow" bgClass="bg-star" description="From your last performance review" /></StaggerItem>
-              <StaggerItem><Stat title="Reporting To" value={data.manager_name ?? "None"} icon={<Users />} variant="indigo" bgClass="bg-users" description="Your manager" /></StaggerItem>
-              <StaggerItem><Stat title="Certifications" value={String(data.certification_count)} subtitle="Total" icon={<Award />} clickable to="/certifications" variant="pink" bgClass="bg-award" description="Total certificates earned" /></StaggerItem>
-              <StaggerItem><Stat title="Expiring Soon" value={String(data.expiring_soon)} subtitle="Within 90 days" icon={<AlertTriangle />} clickable to="/certifications" variant="amber" bgClass="bg-alert" description="Certificates requiring renewal" /></StaggerItem>
+              <StaggerItem><Stat title="Reporting To" value={data.manager_name || "None"} icon={<Users />} variant="indigo" bgClass="bg-users" description="Your manager" /></StaggerItem>
+              <StaggerItem><Stat title="Certifications" value={String(data.certification_count ?? 0)} subtitle="Total" icon={<Award />} clickable to="/certifications" variant="pink" bgClass="bg-award" description="Total certificates earned" /></StaggerItem>
+              <StaggerItem><Stat title="Expiring Soon" value={String(data.expiring_soon ?? 0)} subtitle="Within 90 days" icon={<AlertTriangle />} clickable to="/certifications" variant="amber" bgClass="bg-alert" description="Certificates requiring renewal" /></StaggerItem>
             </StaggerContainer>
 
             <FadeIn delay={0.5} className="dashboard-columns">
@@ -446,14 +446,14 @@ function ManagerDashboard() {
     <AsyncState loading={loading} error={error}>
       {data && (
         <>
-          <WelcomeBanner taskCount={data.cert_expiry_alerts + data.missing_documents} />
+          <WelcomeBanner taskCount={(data.cert_expiry_alerts ?? 0) + (data.missing_documents ?? 0)} />
           <div className="dashboard-grid">
             <StaggerContainer className="grid grid-cards">
-              <StaggerItem><Stat title="Team Members" value={String(data.team_members)} icon={<Users />} variant="indigo" bgClass="bg-users" description="Employees reporting to you" /></StaggerItem>
-              <StaggerItem><Stat title="Avg Team Rating" value={data.avg_team_rating ?? "—"} icon={<Star />} variant="yellow" bgClass="bg-star" description="Average rating of direct reports" /></StaggerItem>
-              <StaggerItem><Stat title="Cert Expiry Alerts" value={String(data.cert_expiry_alerts)} icon={<AlertTriangle />} variant="amber" bgClass="bg-alert" description="Certs expiring in next 90 days" /></StaggerItem>
-              <StaggerItem><Stat title="Missing Documents" value={String(data.missing_documents)} icon={<FileWarning />} clickable onClick={() => setShowMissingDocs(true)} variant="rose" bgClass="bg-document" description="Click to view who's missing documents" /></StaggerItem>
-              <StaggerItem><Stat title="Work Anniversaries" value={String(data.upcoming_anniversaries)} subtitle="Next 30 days" icon={<Calendar />} variant="blue" bgClass="bg-calendar" description="Upcoming in next 30 days" /></StaggerItem>
+              <StaggerItem><Stat title="Team Members" value={String(data.team_members ?? 0)} icon={<Users />} variant="indigo" bgClass="bg-users" description="Employees reporting to you" /></StaggerItem>
+              <StaggerItem><Stat title="Avg Team Rating" value={data.avg_team_rating || "—"} icon={<Star />} variant="yellow" bgClass="bg-star" description="Average rating of direct reports" /></StaggerItem>
+              <StaggerItem><Stat title="Cert Expiry Alerts" value={String(data.cert_expiry_alerts ?? 0)} icon={<AlertTriangle />} variant="amber" bgClass="bg-alert" description="Certs expiring in next 90 days" /></StaggerItem>
+              <StaggerItem><Stat title="Missing Documents" value={String(data.missing_documents ?? 0)} icon={<FileWarning />} clickable onClick={() => setShowMissingDocs(true)} variant="rose" bgClass="bg-document" description="Click to view who's missing documents" /></StaggerItem>
+              <StaggerItem><Stat title="Work Anniversaries" value={String(data.upcoming_anniversaries ?? 0)} subtitle="Next 30 days" icon={<Calendar />} variant="blue" bgClass="bg-calendar" description="Upcoming in next 30 days" /></StaggerItem>
             </StaggerContainer>
 
             <FadeIn delay={0.5} className="dashboard-columns">
@@ -479,17 +479,17 @@ function HrDashboard() {
     <AsyncState loading={loading} error={error}>
       {data && (
         <>
-          <WelcomeBanner taskCount={data.pending_verifications + data.employees_missing_documents} />
+          <WelcomeBanner taskCount={(data.pending_verifications ?? 0) + (data.employees_missing_documents ?? 0)} />
           <div className="dashboard-grid">
             <StaggerContainer className="grid grid-cards">
-              <StaggerItem><Stat title="Total Employees" value={String(data.total_employees)} icon={<Users />} variant="indigo" bgClass="bg-total-employees" description="All employees in the organization" /></StaggerItem>
-              <StaggerItem><Stat title="Active Employees" value={String(data.active_employees)} icon={<UserCheck />} variant="green" bgClass="bg-active-employees" description="Currently active employees" /></StaggerItem>
-              <StaggerItem><Stat title="New Joiners" value={String(data.new_joiners)} subtitle="Last 90 days" icon={<UserPlus />} variant="blue" bgClass="bg-new-joiners" description="New employees joined recently" /></StaggerItem>
-              <StaggerItem><Stat title="Missing Documents" value={String(data.employees_missing_documents)} icon={<FileWarning />} clickable onClick={() => setShowMissingDocs(true)} variant="rose" bgClass="bg-missing-documents" description="Click to view who's missing documents" /></StaggerItem>
-              <StaggerItem><Stat title="Expired Certs" value={String(data.expired_certifications)} icon={<ShieldAlert />} variant="rose" bgClass="bg-expired-certs" description="Certificates already expired" /></StaggerItem>
-              <StaggerItem><Stat title="Pending Verifications" value={String(data.pending_verifications)} icon={<Clock />} variant="amber" bgClass="bg-pending-verifications" description="Awaiting verification" /></StaggerItem>
-              <StaggerItem><Stat title="Certifications Expiring in 30d" value={String(data.certs_expiring_30)} icon={<Timer />} variant="pink" bgClass="bg-certs-30" description="Certificates expiring soon" /></StaggerItem>
-              <StaggerItem><Stat title="Recent Salary Revisions" value={String(data.recent_salary_revisions)} subtitle="Last 30 days" icon={<Banknote />} variant="blue" bgClass="bg-salary-revisions" description="Salary revisions in the last 30 days" /></StaggerItem>
+              <StaggerItem><Stat title="Total Employees" value={String(data.total_employees ?? 0)} icon={<Users />} variant="indigo" bgClass="bg-total-employees" description="All employees in the organization" /></StaggerItem>
+              <StaggerItem><Stat title="Active Employees" value={String(data.active_employees ?? 0)} icon={<UserCheck />} variant="green" bgClass="bg-active-employees" description="Currently active employees" /></StaggerItem>
+              <StaggerItem><Stat title="New Joiners" value={String(data.new_joiners ?? 0)} subtitle="Last 90 days" icon={<UserPlus />} variant="blue" bgClass="bg-new-joiners" description="New employees joined recently" /></StaggerItem>
+              <StaggerItem><Stat title="Missing Documents" value={String(data.employees_missing_documents ?? 0)} icon={<FileWarning />} clickable onClick={() => setShowMissingDocs(true)} variant="rose" bgClass="bg-missing-documents" description="Click to view who's missing documents" /></StaggerItem>
+              <StaggerItem><Stat title="Expired Certs" value={String(data.expired_certifications ?? 0)} icon={<ShieldAlert />} variant="rose" bgClass="bg-expired-certs" description="Certificates already expired" /></StaggerItem>
+              <StaggerItem><Stat title="Pending Verifications" value={String(data.pending_verifications ?? 0)} icon={<Clock />} variant="amber" bgClass="bg-pending-verifications" description="Awaiting verification" /></StaggerItem>
+              <StaggerItem><Stat title="Certifications Expiring in 30d" value={String(data.certs_expiring_30 ?? 0)} icon={<Timer />} variant="pink" bgClass="bg-certs-30" description="Certificates expiring soon" /></StaggerItem>
+              <StaggerItem><Stat title="Recent Salary Revisions" value={String(data.recent_salary_revisions ?? 0)} subtitle="Last 30 days" icon={<Banknote />} variant="blue" bgClass="bg-salary-revisions" description="Salary revisions in the last 30 days" /></StaggerItem>
             </StaggerContainer>
 
             {/* Recent Activity has been moved to the header welcome banner */}

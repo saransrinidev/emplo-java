@@ -4,7 +4,7 @@ import { employeesApi, type Employee, type EmployeeCreate, type EmployeeWithRole
 import { ApiError } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import PageHeader from "../components/PageHeader";
-import { Eye, Trash2, UserCheck, Shield, Key, Search, Grid, List, Briefcase, Activity, ChevronDown, Users, Calendar, Building, Mail } from "lucide-react";
+import { Eye, Trash2, UserCheck, Shield, Key, Search, Grid, List, Briefcase, Activity, ChevronDown, Users, Calendar, Building, Mail, Wand2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 const containerVariants = {
@@ -1023,7 +1023,46 @@ function SingleEmployeeForm({
   return (
     <form onSubmit={handleSubmit} style={{ padding: 20 }}>
       <div className="form-grid">
-        <Field label="Employee Code *" value={form.employee_code} onChange={(v) => set("employee_code", v)} placeholder="EMP-XXXX" />
+        <div className="field">
+          <label>Employee Code *</label>
+          <div style={{ display: "flex", gap: 6 }}>
+            <input
+              className="input"
+              style={{ flex: 1 }}
+              value={form.employee_code}
+              onChange={(e) => set("employee_code", e.target.value)}
+              placeholder="EMP-XXXX"
+            />
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const res = await employeesApi.nextCode();
+                  set("employee_code", res.employee_code);
+                } catch {}
+              }}
+              title="Auto-generate next employee code"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 36,
+                height: 36,
+                background: "var(--color-surface-alt, #f3f4f6)",
+                color: "var(--color-text-secondary, #6b7280)",
+                border: "1px solid var(--color-border, #e5e7eb)",
+                borderRadius: 8,
+                cursor: "pointer",
+                transition: "all 0.15s",
+                flexShrink: 0,
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#eef2ff"; e.currentTarget.style.color = "#4f46e5"; e.currentTarget.style.borderColor = "#c7d2fe"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "var(--color-surface-alt, #f3f4f6)"; e.currentTarget.style.color = "var(--color-text-secondary, #6b7280)"; e.currentTarget.style.borderColor = "var(--color-border, #e5e7eb)"; }}
+            >
+              <Wand2 size={16} />
+            </button>
+          </div>
+        </div>
         <Field label="Full Name *" value={form.full_name} onChange={(v) => set("full_name", v)} placeholder="John Doe" />
         <Field label="Email *" value={form.email} onChange={(v) => set("email", v)} placeholder="john@company.com" type="email" />
         <Field label="Mobile Number" value={form.mobile_number ?? ""} onChange={(v) => set("mobile_number", v)} placeholder="+1 555 0100" />
