@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: emplo-backend
+
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/hr_portal}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      connection-timeout: 30000
+      # Supabase pooler works best with these settings
+      max-lifetime: 1800000
+      data-source-properties:
+        prepareThreshold: 0
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    open-in-view: false
+
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    property-naming-strategy: SNAKE_CASE
+
+server:
+  port: 8000
+
+# Application custom properties
+app:
+  jwt:
+    secret: ${JWT_SECRET_KEY:change-me-to-a-long-random-string}
+    algorithm: HS256
+    access-token-expire-minutes: ${ACCESS_TOKEN_EXPIRE_MINUTES:30}
+    refresh-token-expire-days: ${REFRESH_TOKEN_EXPIRE_DAYS:7}
+  cors:
+    allowed-origins: http://localhost:5173,http://127.0.0.1:5173
+  rate-limit:
+    default-requests-per-minute: 200
+    login-requests-per-minute: 5
+    refresh-requests-per-minute: 10
