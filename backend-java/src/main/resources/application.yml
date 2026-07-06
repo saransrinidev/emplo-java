@@ -51,3 +51,7 @@ app:
     default-requests-per-minute: 200
     login-requests-per-minute: 5
     refresh-requests-per-minute: 10
+  supabase:
+    url: ${SUPABASE_URL:}
+    service-key: ${SUPABASE_SERVICE_KEY:}
+    storage-bucket: ${SUPABASE_STORAGE_BUCKET:uploads}
