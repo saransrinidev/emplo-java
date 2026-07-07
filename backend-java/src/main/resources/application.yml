@@ -55,3 +55,6 @@ app:
     url: ${SUPABASE_URL:}
     service-key: ${SUPABASE_SERVICE_KEY:}
     storage-bucket: ${SUPABASE_STORAGE_BUCKET:uploads}
+  ollama:
+    url: ${OLLAMA_URL:http://localhost:11434}
+    model: ${OLLAMA_MODEL:llama3}
