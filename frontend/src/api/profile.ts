@@ -56,7 +56,24 @@ export const profileApi = {
     postal_code?: string;
     country?: string;
   }) => api.put<Profile>("/profile/address", data),
+  /** Legacy: send base64 data URL or cloud URL */
   updatePhoto: (profile_photo: string) =>
     api.put<Profile>("/profile/photo", { profile_photo }),
+  /** New: upload file directly to cloud storage with thumbnail generation */
+  uploadPhoto: async (file: File): Promise<{ url: string; thumbnail_url: string; profile_photo: string }> => {
+    const token = localStorage.getItem("access_token");
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch("/api/profile/photo/upload", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: "Upload failed" }));
+      throw new Error(err.detail || "Upload failed");
+    }
+    return res.json();
+  },
   removePhoto: () => api.delete<Profile>("/profile/photo"),
 };

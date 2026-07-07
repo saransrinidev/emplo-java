@@ -91,6 +91,45 @@ public class StorageService {
     }
 
     /**
+     * Upload raw bytes to Supabase Storage (used for generated thumbnails).
+     */
+    public String uploadBytes(byte[] bytes, String contentType, String filename, String folder) {
+        if (supabaseUrl.isBlank() || supabaseServiceKey.isBlank()) {
+            // Fallback: return base64
+            String b64 = java.util.Base64.getEncoder().encodeToString(bytes);
+            return "data:" + contentType + ";base64," + b64;
+        }
+
+        try {
+            String safeName = filename.replaceAll("[^a-zA-Z0-9._-]", "_");
+            String path = folder + "/" + UUID.randomUUID().toString().substring(0, 8) + "_" + safeName;
+            String uploadUrl = supabaseUrl + "/storage/v1/object/" + bucket + "/" + path;
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + supabaseServiceKey);
+            headers.set("apikey", supabaseServiceKey);
+            headers.setContentType(MediaType.valueOf(contentType));
+            headers.set("x-upsert", "true");
+
+            HttpEntity<byte[]> entity = new HttpEntity<>(bytes, headers);
+            ResponseEntity<String> response = restTemplate.exchange(uploadUrl, HttpMethod.POST, entity, String.class);
+
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new BadRequestException("Failed to upload thumbnail");
+            }
+
+            return supabaseUrl + "/storage/v1/object/public/" + bucket + "/" + path;
+        } catch (BadRequestException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Thumbnail upload error: {}", e.getMessage());
+            // Return base64 fallback
+            String b64 = java.util.Base64.getEncoder().encodeToString(bytes);
+            return "data:" + contentType + ";base64," + b64;
+        }
+    }
+
+    /**
      * Delete a file from Supabase Storage by its public URL.
      */
     public void delete(String publicUrl) {

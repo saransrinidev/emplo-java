@@ -151,21 +151,17 @@ export default function Profile() {
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      alert("Image too large. Maximum 2MB.");
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Image too large. Maximum 10MB.");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const dataUrl = reader.result as string;
-      try {
-        const updated = await profileApi.updatePhoto(dataUrl);
-        setProfile(updated);
-      } catch {
-        alert("Failed to upload photo.");
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      const result = await profileApi.uploadPhoto(file);
+      // Reload profile to get the updated photo URL
+      setProfile((prev) => prev ? { ...prev, profile_photo: result.profile_photo } : prev);
+    } catch (err: any) {
+      alert(err.message || "Failed to upload photo.");
+    }
   };
 
   return (
