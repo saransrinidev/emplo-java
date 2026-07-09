@@ -30,6 +30,7 @@ public class ProfileService {
     private final EmergencyContactRepository emergencyContactRepository;
     private final EmployeeEditPermissionRepository editPermissionRepository;
     private final AuditService auditService;
+    private final StorageService storageService;
 
     public ProfileResponse getProfile(User user) {
         if (user.getEmployeeId() == null) {
@@ -115,20 +116,102 @@ public class ProfileService {
         Employee emp = employeeRepository.findById(user.getEmployeeId())
                 .orElseThrow(() -> new NotFoundException("Employee not found"));
 
-        if (!request.getProfilePhoto().startsWith("data:image")) {
-            throw new BadRequestException("Invalid image format. Must be a data URL.");
-        }
-        if (request.getProfilePhoto().length() > 2_800_000) {
-            throw new BadRequestException("Image too large. Maximum 2MB.");
+        String photo = request.getProfilePhoto();
+
+        // Accept either a base64 data URL or a cloud URL
+        if (photo.startsWith("data:image")) {
+            // Legacy base64: validate size
+            if (photo.length() > 2_800_000) {
+                throw new BadRequestException("Image too large. Maximum 2MB.");
+            }
+        } else if (!photo.startsWith("http")) {
+            throw new BadRequestException("Invalid image format. Must be a URL or data URL.");
         }
 
-        emp.setProfilePhoto(request.getProfilePhoto());
+        emp.setProfilePhoto(photo);
         employeeRepository.save(emp);
 
         auditService.logAction(user.getId(), "update_photo", "employee",
                 emp.getId().toString(), Map.of("field", "profile_photo"));
 
         return buildProfile(emp);
+    }
+
+    /**
+     * Upload a profile photo as a multipart file.
+     * Uploads original + generates 200x200 thumbnail to Supabase Storage.
+     */
+    @Transactional
+    public Map<String, String> uploadPhotoFile(User user, org.springframework.web.multipart.MultipartFile file) {
+        if (user.getEmployeeId() == null) {
+            throw new NotFoundException("No employee record linked");
+        }
+        if (file.isEmpty()) {
+            throw new BadRequestException("No file provided");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new BadRequestException("Only image files are allowed");
+        }
+        if (file.getSize() > 10 * 1024 * 1024) {
+            throw new BadRequestException("Image too large. Maximum 10MB.");
+        }
+
+        Employee emp = employeeRepository.findById(user.getEmployeeId())
+                .orElseThrow(() -> new NotFoundException("Employee not found"));
+
+        String folder = "profile-photos/" + emp.getId().toString().substring(0, 8);
+
+        // Upload original
+        String originalUrl = storageService.upload(file, folder);
+
+        // Generate and upload thumbnail (200x200)
+        String thumbnailUrl = null;
+        try {
+            byte[] thumbBytes = generateThumbnail(file.getBytes(), 200, 200, contentType);
+            // Create a simple wrapper to upload raw bytes
+            String thumbName = "thumb_" + (file.getOriginalFilename() != null ? file.getOriginalFilename() : "photo.jpg");
+            thumbnailUrl = storageService.uploadBytes(thumbBytes, contentType, thumbName, folder + "/thumbnails");
+        } catch (Exception e) {
+            // Thumbnail generation is non-critical; use original as fallback
+            thumbnailUrl = originalUrl;
+        }
+
+        // Store the thumbnail URL as the profile photo (smaller, faster to load)
+        emp.setProfilePhoto(thumbnailUrl);
+        employeeRepository.save(emp);
+
+        auditService.logAction(user.getId(), "update_photo", "employee",
+                emp.getId().toString(), Map.of("field", "profile_photo", "source", "upload"));
+
+        return Map.of(
+                "url", originalUrl,
+                "thumbnail_url", thumbnailUrl,
+                "profile_photo", thumbnailUrl
+        );
+    }
+
+    private byte[] generateThumbnail(byte[] imageBytes, int width, int height, String contentType) throws Exception {
+        java.awt.image.BufferedImage original = javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(imageBytes));
+        if (original == null) throw new BadRequestException("Cannot read image");
+
+        // Calculate aspect-ratio-preserving dimensions
+        int origW = original.getWidth();
+        int origH = original.getHeight();
+        double scale = Math.min((double) width / origW, (double) height / origH);
+        int newW = (int) (origW * scale);
+        int newH = (int) (origH * scale);
+
+        java.awt.image.BufferedImage thumbnail = new java.awt.image.BufferedImage(newW, newH, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        java.awt.Graphics2D g2d = thumbnail.createGraphics();
+        g2d.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g2d.drawImage(original, 0, 0, newW, newH, null);
+        g2d.dispose();
+
+        String format = contentType.contains("png") ? "png" : "jpg";
+        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+        javax.imageio.ImageIO.write(thumbnail, format, baos);
+        return baos.toByteArray();
     }
 
     @Transactional

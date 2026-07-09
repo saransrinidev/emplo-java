@@ -7,18 +7,31 @@ import {
   type OnboardingSummaryItem,
   type OnboardingTemplate,
 } from "../api/onboarding";
-import { color } from "framer-motion";
+import {
+  User, FileText, Monitor, ClipboardCheck, Users, GraduationCap, Settings,
+  CheckCircle2, Circle, Plus, Trash2, Sparkles
+} from "lucide-react";
 
 // ─── Category metadata ────────────────────────────────────────────────────────
 
-const CATEGORY_META: Record<string, { label: string; icon: string; color: string }> = {
-  personal_info: { label: "Personal Information", icon: "👤", color: "#3b82f6" },
-  documents: { label: "Documents", icon: "📄", color: "#8b5cf6" },
-  it_setup: { label: "IT & System Setup", icon: "💻", color: "#06b6d4" },
-  compliance: { label: "Compliance & Policies", icon: "📋", color: "#f59e0b" },
-  team_intro: { label: "Team Introduction", icon: "🤝", color: "#10b981" },
-  training: { label: "Training", icon: "🎓", color: "#ec4899" },
-  custom: { label: "Other", icon: "⚙️", color: "#6b7280" },
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  personal_info: <User size={16} />,
+  documents: <FileText size={16} />,
+  it_setup: <Monitor size={16} />,
+  compliance: <ClipboardCheck size={16} />,
+  team_intro: <Users size={16} />,
+  training: <GraduationCap size={16} />,
+  custom: <Settings size={16} />,
+};
+
+const CATEGORY_META: Record<string, { label: string; color: string }> = {
+  personal_info: { label: "Personal Information", color: "#3b82f6" },
+  documents: { label: "Documents", color: "#8b5cf6" },
+  it_setup: { label: "IT & System Setup", color: "#06b6d4" },
+  compliance: { label: "Compliance & Policies", color: "#f59e0b" },
+  team_intro: { label: "Team Introduction", color: "#10b981" },
+  training: { label: "Training", color: "#ec4899" },
+  custom: { label: "Other", color: "#6b7280" },
 };
 
 // ─── Employee Onboarding View ─────────────────────────────────────────────────
@@ -58,7 +71,7 @@ function EmployeeOnboarding() {
   if (!progress || tasks.length === 0) {
     return (
       <div className="onboarding-empty">
-        <div className="onboarding-empty-icon">✅</div>
+        <div className="onboarding-empty-icon"><CheckCircle2 size={48} /></div>
         <h2>No Onboarding Tasks</h2>
         <p>You're all set! No pending onboarding items.</p>
       </div>
@@ -79,7 +92,7 @@ function EmployeeOnboarding() {
       {/* Progress Header */}
       <div className="onboarding-header">
         <div className="onboarding-header-text">
-          <h1>Welcome Aboard! 🎉</h1>
+          <h1>Welcome Aboard! <Sparkles size={24} style={{ display: "inline", verticalAlign: "middle" }} /></h1>
           <p>Complete your onboarding checklist to get started with the team.</p>
         </div>
         <div className="onboarding-progress-card">
@@ -116,12 +129,12 @@ function EmployeeOnboarding() {
           return (
             <div key={category} className={`onboarding-category ${allDone ? "category-done" : ""}`}>
               <div className="category-header">
-                <span className="category-icon">{meta.icon}</span>
+                <span className="category-icon" style={{ color: meta.color }}>{CATEGORY_ICONS[category] || CATEGORY_ICONS.custom}</span>
                 <h3 className="category-title">{meta.label}</h3>
                 <span className="category-count">
                   {catCompleted}/{categoryTasks.length}
                 </span>
-                {allDone && <span className="category-badge-done">✓ Complete</span>}
+                {allDone && <span className="category-badge-done"><CheckCircle2 size={12} style={{ display: "inline", verticalAlign: "middle" }} /> Complete</span>}
               </div>
 
               <div className="category-tasks">
@@ -159,9 +172,9 @@ function TaskItem({
     <div className={`task-item ${isDone ? "task-done" : ""}`}>
       <div className="task-checkbox" onClick={() => !isDone && onComplete(task.id)}>
         {isDone ? (
-          <span className="checkbox-checked">✓</span>
+          <span className="checkbox-checked"><CheckCircle2 size={14} /></span>
         ) : (
-          <span className="checkbox-empty" />
+          <span className="checkbox-empty"><Circle size={20} /></span>
         )}
       </div>
       <div className="task-content">
@@ -285,7 +298,7 @@ function SummaryView({ items }: { items: OnboardingSummaryItem[] }) {
           <div className="summary-card-footer">
             <span>{item.completed_tasks}/{item.total_tasks} tasks</span>
             {item.date_of_joining && <span>Joined: {item.date_of_joining}</span>}
-            {item.is_complete && <span className="badge-complete">✓ Completed</span>}
+            {item.is_complete && <span className="badge-complete"><CheckCircle2 size={12} style={{ display: "inline", verticalAlign: "middle" }} /> Completed</span>}
           </div>
         </div>
       ))}
@@ -344,7 +357,7 @@ function TemplatesView({
     <div className="templates-section">
       <div className="templates-header">
         <p className="templates-subtitle">Define checklist items that new employees must complete.</p>
-        <button className="btn-primary" onClick={() => setShowCreate(true)}>+ Add Template</button>
+        <button className="btn-primary" onClick={() => setShowCreate(true)}><Plus size={15} style={{ marginRight: 4 }} /> Add Template</button>
       </div>
 
       {showCreate && (
@@ -359,7 +372,7 @@ function TemplatesView({
               <label>Category</label>
               <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
                 {Object.entries(CATEGORY_META).map(([key, meta]) => (
-                  <option key={key} value={key}>{meta.icon} {meta.label}</option>
+                  <option key={key} value={key}>{meta.label}</option>
                 ))}
               </select>
             </div>
@@ -395,14 +408,14 @@ function TemplatesView({
             return (
               <div key={t.id} className="template-card">
                 <div className="template-card-left">
-                  <span className="template-icon">{meta.icon}</span>
+                  <span className="template-icon" style={{ color: meta.color }}>{CATEGORY_ICONS[t.category] || CATEGORY_ICONS.custom}</span>
                   <div>
                     <div className="template-title">{t.title} {t.is_required && <span className="task-required">*</span>}</div>
                     {t.description && <p className="template-desc">{t.description}</p>}
                     <span className="template-meta">{meta.label} • Due in {t.due_days || "—"} days</span>
                   </div>
                 </div>
-                <button className="btn-danger-sm" onClick={() => handleDelete(t.id)}>Delete</button>
+                <button className="btn-danger-sm" onClick={() => handleDelete(t.id)}><Trash2 size={13} /></button>
               </div>
             );
           })

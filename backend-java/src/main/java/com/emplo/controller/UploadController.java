@@ -1,13 +1,14 @@
 package com.emplo.controller;
 
+import com.emplo.entity.User;
 import com.emplo.exception.BadRequestException;
 import com.emplo.security.CurrentUserProvider;
+import com.emplo.service.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Base64;
 import java.util.Map;
 
 @RestController
@@ -15,32 +16,34 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class UploadController {
 
-    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
     private final CurrentUserProvider currentUserProvider;
+    private final StorageService storageService;
 
     @PostMapping
     public ResponseEntity<Map<String, String>> upload(@RequestParam("file") MultipartFile file) {
-        currentUserProvider.getCurrentUser(); // ensure authenticated
+        User user = currentUserProvider.getCurrentUser();
 
         if (file.isEmpty() || file.getOriginalFilename() == null) {
             throw new BadRequestException("No file provided");
         }
-        if (file.getSize() > MAX_FILE_SIZE) {
-            throw new BadRequestException("File too large. Maximum 5MB.");
+
+        // Determine folder based on content type
+        String folder = "documents";
+        String contentType = file.getContentType();
+        if (contentType != null && contentType.startsWith("image/")) {
+            folder = "images";
         }
 
-        try {
-            byte[] content = file.getBytes();
-            String contentType = file.getContentType() != null ? file.getContentType() : "application/octet-stream";
-            String b64 = Base64.getEncoder().encodeToString(content);
-            String dataUrl = "data:" + contentType + ";base64," + b64;
-
-            return ResponseEntity.ok(Map.of(
-                    "url", dataUrl,
-                    "filename", file.getOriginalFilename()
-            ));
-        } catch (Exception e) {
-            throw new BadRequestException("Failed to process file: " + e.getMessage());
+        // Include employee context in path if available
+        if (user.getEmployeeId() != null) {
+            folder = folder + "/" + user.getEmployeeId().toString().substring(0, 8);
         }
+
+        String url = storageService.upload(file, folder);
+
+        return ResponseEntity.ok(Map.of(
+                "url", url,
+                "filename", file.getOriginalFilename()
+        ));
     }
 }
