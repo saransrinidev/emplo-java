@@ -8,6 +8,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/profile")
@@ -41,10 +44,26 @@ public class ProfileController {
         return ResponseEntity.ok(profileService.updateAddress(user, request));
     }
 
+    /**
+     * Upload profile photo as multipart file → stored in Supabase Storage.
+     * Also accepts legacy JSON body with base64 data URL for backward compat.
+     */
     @PutMapping("/photo")
     public ResponseEntity<ProfileResponse> updatePhoto(@Valid @RequestBody UpdatePhotoRequest request) {
         User user = currentUserProvider.getCurrentUser();
         return ResponseEntity.ok(profileService.updatePhoto(user, request));
+    }
+
+    /**
+     * New: Upload profile photo as multipart/form-data.
+     * Generates a thumbnail and stores both in cloud storage.
+     * Returns profile with the new photo URL.
+     */
+    @PostMapping("/photo/upload")
+    public ResponseEntity<Map<String, String>> uploadPhoto(@RequestParam("file") MultipartFile file) {
+        User user = currentUserProvider.getCurrentUser();
+        Map<String, String> result = profileService.uploadPhotoFile(user, file);
+        return ResponseEntity.ok(result);
     }
 
     @DeleteMapping("/photo")
