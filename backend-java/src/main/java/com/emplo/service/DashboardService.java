@@ -8,6 +8,7 @@ import com.emplo.entity.enums.VerificationStatus;
 import com.emplo.exception.NotFoundException;
 import com.emplo.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -28,6 +29,7 @@ public class DashboardService {
     private static final List<DocumentType> REQUIRED_DOCUMENT_TYPES = List.of(
             DocumentType.school, DocumentType.intermediate, DocumentType.degree);
 
+    @Cacheable(value = "dashboard_employee", key = "#user.id")
     public Map<String, Object> employeeDashboard(User user) {
         if (user.getEmployeeId() == null) {
             throw new NotFoundException("No employee record linked");
@@ -98,6 +100,7 @@ public class DashboardService {
         return result;
     }
 
+    @Cacheable("dashboard_hr")
     public Map<String, Object> hrDashboard() {
         List<Employee> all = employeeRepository.findAll();
         long total = all.size();
@@ -157,6 +160,7 @@ public class DashboardService {
         return Map.of("total", results.size(), "employees", results);
     }
 
+    @Cacheable("dashboard_hr")
     public Map<String, Object> analytics() {
         List<Employee> all = employeeRepository.findAll();
         long total = all.size();

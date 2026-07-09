@@ -13,6 +13,8 @@ import com.emplo.repository.EmployeeRepository;
 import com.emplo.repository.OnboardingTaskRepository;
 import com.emplo.repository.OnboardingTemplateRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +34,7 @@ public class OnboardingService {
 
     // ─── Templates (HR manages these) ─────────────────────────────────────────
 
+    @Cacheable("onboarding_templates")
     public List<OnboardingTemplate> listTemplates() {
         return templateRepository.findAllByIsActiveTrueOrderBySortOrder();
     }
@@ -41,6 +44,7 @@ public class OnboardingService {
     }
 
     @Transactional
+    @CacheEvict(value = "onboarding_templates", allEntries = true)
     public OnboardingTemplate createTemplate(String title, String description, OnboardingCategory category,
                                              Integer sortOrder, Boolean isRequired, Integer dueDays,
                                              String actionType, String actionUrl) {
@@ -59,6 +63,7 @@ public class OnboardingService {
     }
 
     @Transactional
+    @CacheEvict(value = "onboarding_templates", allEntries = true)
     public OnboardingTemplate updateTemplate(UUID templateId, String title, String description,
                                              OnboardingCategory category, Integer sortOrder,
                                              Boolean isRequired, Integer dueDays, String actionType,
@@ -78,6 +83,7 @@ public class OnboardingService {
     }
 
     @Transactional
+    @CacheEvict(value = "onboarding_templates", allEntries = true)
     public void deleteTemplate(UUID templateId) {
         if (!templateRepository.existsById(templateId)) {
             throw new NotFoundException("Template not found");
