@@ -1,5 +1,9 @@
 import { useRef, useState, type FormEvent } from "react";
-import { Upload, Wand2, Edit3, CheckCircle, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Upload, Wand2, Edit3, CheckCircle, Loader2, Award, Bookmark,
+  Calendar, Plus, X, FolderHeart, FileCheck, FileClock
+} from "lucide-react";
 import { certificationsApi } from "../api/certifications";
 import { uploadFile } from "../api/upload";
 import { api } from "../api/client";
@@ -7,8 +11,6 @@ import { useAuth } from "../context/AuthContext";
 import AsyncState from "../components/AsyncState";
 import EmptyState from "../components/EmptyState";
 import ImageModal from "../components/ImageModal";
-import PageHeader from "../components/PageHeader";
-import Skeleton from "../components/Skeleton";
 import StatusBadge from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
 import { useApi } from "../hooks/useApi";
@@ -37,26 +39,87 @@ export default function Certifications() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewTitle, setPreviewTitle] = useState("");
 
+  // Stats calculations
+  const statsTotal = certifications.length;
+  const statsVerified = certifications.filter(c => c.verification_status === "verified").length;
+  const statsAwaiting = certifications.filter(c => c.verification_status === "uploaded").length;
+
+  // Filter listings
+  const filteredCerts = certifications;
+
   return (
-    <div>
-      <PageHeader
-        title="Certifications"
-        subtitle="Technical and professional certifications."
-        actions={
-          <button className="btn btn-sm" onClick={() => setShowForm((v) => !v)}>
-            {showForm ? "Cancel" : "+ Add Certification"}
+    <div className="cert-page">
+      {/* Header section */}
+      <div className="reimb-header">
+        <div>
+          <h1>
+            <Award size={24} style={{ marginRight: 8, color: "var(--primary-color)", verticalAlign: "middle" }} />
+            <span>Certifications</span>
+          </h1>
+          <p>Manage and verify your professional technical credentials.</p>
+        </div>
+        {user && (
+          <button className="policy-btn-primary" onClick={() => setShowForm((v) => !v)}>
+            {showForm ? <X size={16} /> : <Plus size={16} />}
+            <span>{showForm ? "Close Form" : "Add Certification"}</span>
           </button>
-        }
-      />
-      {showForm && user && (
-        <AddCertificationForm
-          onSuccess={() => {
-            setShowForm(false);
-            setRefreshKey((k) => k + 1);
-            toast.success("Certification added successfully!");
-          }}
-        />
-      )}
+        )}
+      </div>
+
+      {/* Dashboard Stats */}
+      <div className="cert-stats-grid">
+        <div className="cert-stat-card">
+          <div className="cert-stat-icon">
+            <FolderHeart size={20} />
+          </div>
+          <div className="cert-stat-info">
+            <span className="cert-stat-number">{statsTotal}</span>
+            <span className="cert-stat-label">Total Credentials</span>
+          </div>
+        </div>
+        <div className="cert-stat-card">
+          <div className="cert-stat-icon">
+            <FileCheck size={20} />
+          </div>
+          <div className="cert-stat-info">
+            <span className="cert-stat-number">{statsVerified}</span>
+            <span className="cert-stat-label">Verified</span>
+          </div>
+        </div>
+        <div className="cert-stat-card">
+          <div className="cert-stat-icon">
+            <FileClock size={20} />
+          </div>
+          <div className="cert-stat-info">
+            <span className="cert-stat-number">{statsAwaiting}</span>
+            <span className="cert-stat-label">Awaiting HR Review</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Slide-in scanner uploader form */}
+      <AnimatePresence>
+        {showForm && user && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            style={{ overflow: "hidden" }}
+          >
+            <AddCertificationForm
+              onSuccess={() => {
+                setShowForm(false);
+                setRefreshKey((k) => k + 1);
+                toast.success("Certification added successfully!");
+              }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+
+
       <AsyncState loading={loading} error={error}>
         {certifications.length === 0 ? (
           <EmptyState
@@ -68,45 +131,86 @@ export default function Certifications() {
               </button>
             }
           />
+        ) : filteredCerts.length === 0 ? (
+          <div className="reimb-empty">
+            <Award size={44} />
+            <h3>No matching credentials found</h3>
+            <p>Try resetting your search query or entering a different keyword.</p>
+          </div>
         ) : (
-          <div className="card" style={{ padding: 0 }}>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Certificate</th>
-                  <th>Number</th>
-                  <th>Category</th>
-                  <th>Issued</th>
-                  <th>Expiry</th>
-                  <th>File</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {certifications.map((cert) => (
-                  <tr key={cert.id}>
-                    <td>{cert.certificate_name}</td>
-                    <td className="muted">{cert.certificate_number ?? "—"}</td>
-                    <td className="muted" style={{ textTransform: "capitalize" }}>
-                      {cert.category.replace("_", " ")}
-                    </td>
-                    <td className="muted">{cert.issued_date ?? "—"}</td>
-                    <td className="muted">{cert.expiry_date ?? "—"}</td>
-                    <td>
+          <div className="cert-grid">
+            <AnimatePresence mode="popLayout">
+              {filteredCerts.map((cert) => {
+                const catClass = `cat-${cert.category}`;
+                return (
+                  <motion.div
+                    key={cert.id}
+                    className={`cert-card ${catClass}`}
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div className="cert-card-header">
+                      <div className="cert-card-icon-wrapper">
+                        <Award size={22} />
+                      </div>
+                      <StatusBadge status={cert.verification_status} />
+                    </div>
+                    <div className="cert-card-body">
+                      <h3 className="cert-card-title" title={cert.certificate_name}>
+                        {cert.certificate_name}
+                      </h3>
+                      {cert.certificate_number && (
+                        <span className="cert-card-number">#{cert.certificate_number}</span>
+                      )}
+                      <div className="cert-card-divider" />
+                      <div className="cert-card-meta">
+                        <div className="cert-card-meta-row">
+                          <Bookmark size={14} />
+                          <span style={{ textTransform: "capitalize" }}>
+                            {cert.category.replace("_", " ")}
+                          </span>
+                        </div>
+                        <div className="cert-card-meta-row">
+                          <Calendar size={14} />
+                          <span>Issued: {cert.issued_date ?? "—"}</span>
+                        </div>
+                        {cert.expiry_date && (
+                          <div className="cert-card-meta-row">
+                            <Calendar size={14} />
+                            <span>Expires: {cert.expiry_date}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="cert-card-footer">
                       {cert.file_url ? (
-                        <button className="btn btn-outline btn-sm" onClick={() => { setPreviewUrl(cert.file_url); setPreviewTitle(cert.certificate_name); }}>
-                          View
+                        <button
+                          className="policy-btn-secondary"
+                          style={{ padding: "0.45rem 1.1rem", fontSize: "0.82rem", width: "100%" }}
+                          onClick={() => {
+                            setPreviewUrl(cert.file_url);
+                            setPreviewTitle(cert.certificate_name);
+                          }}
+                        >
+                          View Credential
                         </button>
-                      ) : <span className="muted">—</span>}
-                    </td>
-                    <td><StatusBadge status={cert.verification_status} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      ) : (
+                        <span className="muted" style={{ fontSize: "0.82rem", textAlign: "center", width: "100%" }}>
+                          No document attached
+                        </span>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
           </div>
         )}
       </AsyncState>
+      
       {previewUrl && (
         <ImageModal url={previewUrl} title={previewTitle} onClose={() => setPreviewUrl(null)} />
       )}
@@ -131,7 +235,7 @@ function AddCertificationForm({
   const [category, setCategory] = useState("other");
   const [issuedDate, setIssuedDate] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
-  const [fileUrl, setFileUrl] = useState("");
+  const fileUrl = "";
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -191,7 +295,6 @@ function AddCertificationForm({
     if (result.certificate_name) setCertName(result.certificate_name);
     if (result.certificate_number) setCertNumber(result.certificate_number);
     if (result.category) {
-      // Map to valid enum values; anything not recognized → "other"
       const validCategories = ["aws", "microsoft", "azure", "google", "meta", "cisco", "comptia", "scrum", "pmp", "ibm", "coursera", "power_bi", "other"];
       setCategory(validCategories.includes(result.category) ? result.category : "other");
     }
@@ -277,7 +380,7 @@ function AddCertificationForm({
 
   return (
     <div className="card cert-form-card">
-      <h2 style={{ marginBottom: 4 }}>Add Certification</h2>
+      <h2 style={{ marginBottom: 4, fontSize: "1.25rem", fontWeight: 800 }}>Add Certification</h2>
       <p className="muted" style={{ fontSize: 13, marginBottom: 20 }}>
         Upload a certificate image to auto-fill details, or enter them manually.
       </p>
@@ -289,18 +392,18 @@ function AddCertificationForm({
           className={`cert-mode-btn ${mode === "automatic" ? "cert-mode-active" : ""}`}
           onClick={() => setMode("automatic")}
         >
-          <Wand2 size={16} />
-          <span>Automatic</span>
-          <span className="cert-mode-sub">Scan & auto-fill</span>
+          <Wand2 size={18} />
+          <span>Automatic Scanner</span>
+          <span className="cert-mode-sub">OCR Auto-Fill</span>
         </button>
         <button
           type="button"
           className={`cert-mode-btn ${mode === "manual" ? "cert-mode-active" : ""}`}
           onClick={() => setMode("manual")}
         >
-          <Edit3 size={16} />
-          <span>Manual</span>
-          <span className="cert-mode-sub">Enter details</span>
+          <Edit3 size={18} />
+          <span>Manual Entry</span>
+          <span className="cert-mode-sub">Fill details manually</span>
         </button>
       </div>
 
@@ -314,21 +417,23 @@ function AddCertificationForm({
             onChange={handleFileChange}
             style={{ display: "none" }}
           />
-          <div className="cert-upload-box" onClick={() => fileInputRef.current?.click()}>
+          <div className={`cert-upload-box ${scanning ? "is-scanning" : ""}`} onClick={() => fileInputRef.current?.click()}>
             {scanning ? (
               <div className="cert-upload-scanning">
                 <Loader2 size={24} className="spin" />
-                <span>Scanning certificate...</span>
+                <span>AI OCR Scanning certificate...</span>
               </div>
             ) : selectedFile ? (
               <div className="cert-upload-selected">
-                {scanned && <CheckCircle size={18} className="text-success" />}
+                <div className="cert-upload-selected-icon">
+                  <CheckCircle size={18} />
+                </div>
                 <div>
-                  <div style={{ fontWeight: 500 }}>{selectedFile.name}</div>
-                  <div className="muted" style={{ fontSize: 12 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>{selectedFile.name}</div>
+                  <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>
                     {(selectedFile.size / 1024).toFixed(1)} KB
-                    {scanned && ` · ${Math.round(scanConfidence * 100)}% confidence`}
-                    {" · Click to change"}
+                    {scanned && ` · ${Math.round(scanConfidence * 100)}% scanning confidence`}
+                    {" · Click to change file"}
                   </div>
                 </div>
               </div>
@@ -336,10 +441,10 @@ function AddCertificationForm({
               <div className="cert-upload-placeholder">
                 <Upload size={24} />
                 <div>
-                  <div style={{ fontWeight: 500 }}>
+                  <div style={{ fontWeight: 600 }}>
                     {mode === "automatic" ? "Upload certificate to scan" : "Upload certificate file (optional)"}
                   </div>
-                  <div className="muted" style={{ fontSize: 12 }}>JPG, PNG, PDF accepted</div>
+                  <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>JPG, PNG, PDF formats accepted</div>
                 </div>
               </div>
             )}
@@ -349,8 +454,8 @@ function AddCertificationForm({
         {/* Scanned indicator */}
         {scanned && mode === "automatic" && (
           <div className="cert-scan-result">
-            <CheckCircle size={14} />
-            <span>Fields auto-filled from scan. Please verify and correct if needed.</span>
+            <CheckCircle size={16} />
+            <span>Fields auto-filled from OCR scan. Please verify and save.</span>
           </div>
         )}
 
@@ -358,19 +463,20 @@ function AddCertificationForm({
         {showPasteField && mode === "automatic" && !scanned && (
           <div className="cert-paste-section">
             <p className="cert-paste-hint">
-              💡 Copy the text from your certificate (Ctrl+A → Ctrl+C on the certificate page) and paste it below:
+              💡 Copy text from your certificate and paste it below:
             </p>
             <textarea
               className="input"
-              rows={4}
+              rows={3}
               value={pasteText}
               onChange={(e) => setPasteText(e.target.value)}
-              placeholder="Paste certificate text here... (e.g. from Coursera, AWS, Microsoft credential page)"
+              placeholder="Paste text here..."
+              style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: 10, outline: "none", border: "1.5px solid hsl(var(--border))" }}
             />
             <button
               type="button"
-              className="btn btn-sm"
-              style={{ marginTop: 8 }}
+              className="policy-btn-primary"
+              style={{ marginTop: 12, padding: "0.5rem 1.25rem", fontSize: "0.82rem" }}
               disabled={!pasteText.trim() || scanning}
               onClick={() => handlePasteText(pasteText)}
             >
@@ -417,10 +523,10 @@ function AddCertificationForm({
           </div>
         </div>
 
-        {formError && <p className="error-text" style={{ marginBottom: 12 }}>{formError}</p>}
+        {formError && <p className="error-text" style={{ margin: "10px 0", color: "#dc2626", fontSize: 13, fontWeight: 500 }}>{formError}</p>}
 
-        <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-          <button className="btn" type="submit" disabled={submitting}>
+        <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+          <button className="policy-btn-primary" type="submit" disabled={submitting}>
             {uploading ? "Uploading file…" : submitting ? "Saving…" : "Save Certification"}
           </button>
         </div>
@@ -432,7 +538,6 @@ function AddCertificationForm({
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function parseDateString(dateStr: string): string | null {
-  // Try to parse various date formats into YYYY-MM-DD for the input
   try {
     const d = new Date(dateStr);
     if (!isNaN(d.getTime())) {
@@ -440,11 +545,9 @@ function parseDateString(dateStr: string): string | null {
     }
   } catch { /* ignore */ }
 
-  // Try DD/MM/YYYY
   const match = dateStr.match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/);
   if (match) {
     const [, a, b, year] = match;
-    // Assume DD/MM/YYYY
     const day = parseInt(a);
     const month = parseInt(b);
     if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {

@@ -15,6 +15,7 @@ import "./styles/performance.css";
 import "./styles/chat.css";
 import "./styles/reimbursements.css";
 import "./styles/policies.css";
+import "./styles/certifications.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
