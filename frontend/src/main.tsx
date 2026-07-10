@@ -13,6 +13,8 @@ import "./styles/onboarding.css";
 import "./styles/tour.css";
 import "./styles/performance.css";
 import "./styles/chat.css";
+import "./styles/reimbursements.css";
+import "./styles/policies.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

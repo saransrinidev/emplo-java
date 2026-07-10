@@ -22,6 +22,8 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Salary = lazy(() => import("./pages/Salary"));
 const Tasks = lazy(() => import("./pages/Tasks"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
+const Reimbursements = lazy(() => import("./pages/Reimbursements"));
+const Policies = lazy(() => import("./pages/Policies"));
 
 function PageFallback() {
   return (
@@ -49,6 +51,8 @@ export default function App() {
         <Route path="/messages" element={<Suspense fallback={<PageFallback />}><Messages /></Suspense>} />
         <Route path="/tasks" element={<Suspense fallback={<PageFallback />}><Tasks /></Suspense>} />
         <Route path="/onboarding" element={<Suspense fallback={<PageFallback />}><Onboarding /></Suspense>} />
+        <Route path="/reimbursements" element={<Suspense fallback={<PageFallback />}><Reimbursements /></Suspense>} />
+        <Route path="/policies" element={<Suspense fallback={<PageFallback />}><Policies /></Suspense>} />
         <Route path="/notifications" element={<Suspense fallback={<PageFallback />}><Notifications /></Suspense>} />
 
         {/* All roles - Attendance */}
