@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Reimbursements")
 @RestController
 @RequestMapping("/reimbursements")
 @RequiredArgsConstructor
