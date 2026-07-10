@@ -1,83 +1,120 @@
-/* ═══════════════════════════════════════════════════════════════════════════
-   COMPENSATION / SALARY PAGE
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* ==========================================================================
+   Compensation & Salary Redesign Styles — Premium Dashboard (Compact Edition)
+   ========================================================================== */
 
-/* ─── Header Cards ─── */
 .compensation-header {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr;
   gap: 16px;
-  margin-bottom: 28px;
+  margin-bottom: 1.5rem;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 992px) {
   .compensation-header {
     grid-template-columns: 1fr;
   }
 }
 
+/* --- Stat Cards --- */
 .compensation-ctc-card,
 .compensation-growth-card,
 .compensation-monthly-card {
   border: 1px solid hsl(var(--border));
-  border-radius: var(--radius);
+  border-radius: 14px;
   background: var(--surface);
-  padding: 20px 24px;
+  padding: 16px 20px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.compensation-ctc-card:hover,
+.compensation-growth-card:hover,
+.compensation-monthly-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(59, 130, 246, 0.3);
 }
 
 .compensation-ctc-card {
   border-left: 4px solid var(--primary-color);
 }
 
-.compensation-ctc-label,
-.compensation-growth-label,
-.compensation-monthly-label {
+.compensation-card-header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
-  margin-bottom: 8px;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
 }
 
-.compensation-ctc-label svg,
-.compensation-growth-label svg,
-.compensation-monthly-label svg {
-  width: 14px;
-  height: 14px;
-  color: var(--primary-color);
+.compensation-card-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.compensation-card-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Color backplates for top cards */
+.icon-box-ctc {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.icon-box-growth {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.icon-box-monthly {
+  background-color: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
 }
 
 .compensation-ctc-amount {
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 1.8rem;
+  font-weight: 800;
   color: var(--text);
-  line-height: 1.2;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 .compensation-ctc-period {
-  font-size: 14px;
-  font-weight: 400;
+  font-size: 0.9rem;
+  font-weight: 500;
   color: var(--text-muted);
 }
 
 .compensation-ctc-effective {
-  font-size: 13px;
+  font-size: 0.8rem;
   color: var(--text-muted);
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .compensation-growth-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 1.4rem;
+  font-weight: 800;
   color: hsl(var(--success));
-  margin-top: 4px;
 }
 
 .compensation-growth-neutral {
@@ -85,44 +122,47 @@
 }
 
 .compensation-growth-date {
-  font-size: 12px;
+  font-size: 0.8rem;
   color: var(--text-muted);
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .compensation-monthly-amount {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 1.4rem;
+  font-weight: 800;
   color: var(--text);
-  margin-top: 4px;
 }
 
 .compensation-monthly-sub {
-  font-size: 12px;
+  font-size: 0.8rem;
   color: var(--text-muted);
   margin-top: 4px;
 }
 
-/* ─── Section Title ─── */
+/* --- Section Headers --- */
 .compensation-section-title {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
   color: var(--text);
-  margin-bottom: 16px;
+  margin: 0 0 1rem 0;
 }
 
 .compensation-section-title svg {
-  width: 16px;
-  height: 16px;
   color: var(--primary-color);
+  width: 15px;
+  height: 15px;
 }
 
-/* ─── Pending Revisions ─── */
+[data-theme="dark"] .compensation-section-title svg {
+  color: #60a5fa;
+}
+
+/* --- Pending Approval Revision (HR Only) --- */
 .compensation-pending {
-  margin-bottom: 28px;
+  margin-bottom: 1.5rem;
 }
 
 .compensation-pending-card {
@@ -130,23 +170,37 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px 20px;
-  border: 1px solid hsl(45, 93%, 75%);
-  border-radius: var(--radius);
-  background: hsl(45, 93%, 97%);
-  margin-bottom: 8px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border-left: 4px solid #f59e0b;
+  border-top: 1px solid rgba(245, 158, 11, 0.2);
+  border-right: 1px solid rgba(245, 158, 11, 0.2);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.03);
+  margin-bottom: 10px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s ease;
+}
+
+.compensation-pending-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.compensation-pending-info {
+  flex: 1;
+  min-width: 0;
 }
 
 .compensation-pending-amounts {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 0.95rem;
+  font-weight: 600;
   color: var(--text);
+  margin-bottom: 2px;
 }
 
 .compensation-pending-meta {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
 }
 
 .compensation-pending-actions {
@@ -155,104 +209,143 @@
   flex-shrink: 0;
 }
 
-/* ─── Timeline ─── */
+/* --- Timeline Redesign --- */
 .compensation-timeline-section {
-  margin-top: 8px;
+  margin-top: 1rem;
 }
 
-.compensation-timeline {
+.compensation-timeline-wrapper {
   position: relative;
-  padding-left: 0;
+  padding-left: 10px;
+}
+
+.compensation-timeline-line-connector {
+  position: absolute;
+  left: 84px;
+  /* Center aligned math: left width 58px + gap 16px + center col width 20px/2 = 84px */
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
+  background-color: hsl(var(--border));
 }
 
 .compensation-timeline-item {
-  display: grid;
-  grid-template-columns: 60px 24px 1fr;
-  gap: 0;
-  min-height: 80px;
-}
-
-.compensation-timeline-year {
-  grid-column: 1;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--primary-color);
-  padding-top: 2px;
-  text-align: right;
-  padding-right: 12px;
-}
-
-.compensation-timeline-node {
-  grid-column: 2;
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  gap: 16px;
+  align-items: stretch;
+  margin-bottom: 1.25rem;
+  position: relative;
+}
+
+.compensation-timeline-left {
+  width: 58px;
+  text-align: right;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--primary-color);
+  padding-top: 10px;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .compensation-timeline-left {
+  color: #60a5fa;
+}
+
+.compensation-timeline-center {
+  width: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 12px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
 }
 
 .compensation-timeline-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: hsl(var(--border));
-  border: 2px solid var(--surface);
-  box-shadow: 0 0 0 2px hsl(var(--border));
-  flex-shrink: 0;
-  margin-top: 5px;
+  background: var(--surface);
+  border: 2.5px solid hsl(var(--border));
+  box-shadow: 0 0 0 2px var(--surface);
+  transition: all 0.2s ease;
 }
 
-.compensation-timeline-dot-active {
+.compensation-timeline-dot.active {
   background: var(--primary-color);
-  box-shadow: 0 0 0 3px var(--primary-color), 0 0 0 5px hsl(var(--primary) / 0.15);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2.5px var(--surface), 0 0 0 5px hsl(var(--primary) / 0.15);
 }
 
-.compensation-timeline-line {
-  width: 2px;
+[data-theme="dark"] .compensation-timeline-dot.active {
+  background: #60a5fa;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2.5px var(--surface), 0 0 0 5px rgba(96, 165, 250, 0.2);
+}
+
+.compensation-timeline-right {
   flex: 1;
-  background: hsl(var(--border));
-  margin: 4px 0;
-  min-height: 40px;
+  background: var(--surface);
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  padding: 14px 18px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.compensation-timeline-item:last-child .compensation-timeline-line {
-  display: none;
+.compensation-timeline-right:hover {
+  border-color: rgba(59, 130, 246, 0.25);
+  box-shadow: var(--shadow-md);
 }
 
-.compensation-timeline-content {
-  grid-column: 3;
-  padding: 0 0 24px 16px;
-}
-
-.compensation-timeline-header {
-  margin-bottom: 6px;
+.compensation-timeline-right-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .compensation-increment-badge {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-size: 12px;
-  font-weight: 600;
-  color: hsl(var(--success));
-  background: hsl(var(--success) / 0.1);
-  padding: 2px 8px;
-  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #059669;
+  background: #d1fae5;
+  padding: 0.15rem 0.55rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+[data-theme="dark"] .compensation-increment-badge {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
 }
 
 .compensation-initial-badge {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-muted);
-  background: var(--bg-secondary);
-  padding: 2px 8px;
-  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--surface-hover);
+  padding: 0.15rem 0.55rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .compensation-timeline-amounts {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 1.05rem;
+  font-weight: 700;
   color: var(--text);
 }
 
@@ -260,12 +353,13 @@
   color: var(--text-muted);
   font-weight: 400;
   text-decoration: line-through;
-  font-size: 13px;
+  font-size: 0.85rem;
 }
 
 .compensation-arrow {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 0.85rem;
+  font-weight: 400;
 }
 
 .compensation-new {
@@ -275,123 +369,527 @@
 .compensation-timeline-meta {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-top: 4px;
+  justify-content: space-between;
   flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.78rem;
+  border-top: 1px solid hsl(var(--border) / 0.5);
+  padding-top: 8px;
+  margin-top: 2px;
 }
 
 .compensation-reason {
-  font-size: 12px;
-  color: var(--text-muted);
-  background: var(--bg-secondary);
-  padding: 2px 8px;
-  border-radius: 4px;
+  color: var(--text-secondary);
+  font-weight: 600;
 }
 
 .compensation-effective {
-  font-size: 12px;
   color: var(--text-muted);
 }
 
-/* ─── Modal ─── */
-.compensation-modal {
-  max-width: 480px;
-}
-
+/* --- Salary Proposal Modal & Structure --- */
 .compensation-modal-current {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-radius: 8px;
-  background: var(--bg-secondary);
+  border-radius: 10px;
+  background: var(--surface-hover);
+  border: 1px solid hsl(var(--border));
   margin-bottom: 20px;
 }
 
 .compensation-modal-current-label {
-  font-size: 13px;
-  color: var(--text-muted);
-  font-weight: 500;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 600;
 }
 
 .compensation-modal-current-value {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 1.05rem;
+  font-weight: 800;
   color: var(--text);
 }
 
 .compensation-modal-calc {
-  border: 1px solid hsl(var(--border));
-  border-radius: 8px;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 10px;
   padding: 12px 16px;
   margin-top: 16px;
-  background: hsl(var(--success) / 0.03);
+  background: rgba(16, 185, 129, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .compensation-modal-calc-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 13px;
-  padding: 4px 0;
+  font-size: 0.8rem;
 }
 
 .compensation-modal-calc-row span:first-child {
-  color: var(--text-muted);
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .text-success {
-  color: hsl(var(--success));
-  font-weight: 600;
+  color: #059669;
+  font-weight: 700;
 }
 
 .text-danger {
-  color: hsl(var(--destructive));
-  font-weight: 600;
+  color: #ef4444;
+  font-weight: 700;
 }
 
-/* ─── Input with prefix ─── */
 .input-with-prefix {
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .input-prefix {
   position: absolute;
   left: 12px;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 0.9rem;
+  font-weight: 700;
   color: var(--text-muted);
   pointer-events: none;
 }
 
 .input-with-prefix .input {
   padding-left: 28px;
+  width: 100%;
 }
 
-/* ─── Mobile ─── */
+/* --- Mobile / Viewports --- */
 @media (max-width: 768px) {
   .compensation-timeline-item {
-    grid-template-columns: 40px 20px 1fr;
+    gap: 12px;
   }
 
-  .compensation-timeline-year {
-    font-size: 11px;
-    padding-right: 8px;
+  .compensation-timeline-line-connector {
+    left: 74px;
   }
 
-  .compensation-ctc-amount {
-    font-size: 22px;
+  .compensation-timeline-left {
+    width: 52px;
+    font-size: 0.8rem;
+  }
+
+  .compensation-timeline-right {
+    padding: 12px;
+    border-radius: 10px;
   }
 
   .compensation-pending-card {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 12px;
   }
 
   .compensation-pending-actions {
-    width: 100%;
     justify-content: flex-end;
   }
+}
+
+/* ==========================================================================
+   INTERACTIVE CHARTS, TABS & DETAILED BREAKDOWN
+   ========================================================================== */
+
+/* --- Custom Tabs --- */
+.comp-tabs-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid hsl(var(--border));
+  padding-bottom: 2px;
+}
+
+.comp-tabs {
+  display: inline-flex;
+  gap: 4px;
+  background-color: var(--surface-hover);
+  padding: 3px;
+  border-radius: 10px;
+  border: 1px solid hsl(var(--border));
+}
+
+.comp-tab-btn {
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border: none;
+  background: transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.comp-tab-btn:hover {
+  color: var(--text);
+  background-color: var(--surface);
+}
+
+.comp-tab-btn.active {
+  color: white;
+  background-color: var(--primary-color);
+  box-shadow: 0 3px 8px hsl(var(--primary) / 0.15);
+}
+
+[data-theme="dark"] .comp-tab-btn.active {
+  color: #fff;
+  background-color: #3b82f6;
+  box-shadow: 0 3px 10px rgba(59, 130, 246, 0.2);
+}
+
+/* --- SVG Chart Section --- */
+.comp-chart-card {
+  background: var(--surface);
+  border: 1px solid hsl(var(--border));
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+.comp-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.comp-chart-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.comp-chart-svg-wrapper {
+  position: relative;
+  width: 100%;
+  height: 180px;
+}
+
+.comp-chart-line {
+  stroke-dasharray: 800;
+  stroke-dashoffset: 800;
+  animation: drawLine 1.8s ease forwards;
+}
+
+@keyframes drawLine {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.comp-chart-grid-line {
+  stroke: hsl(var(--border) / 0.5);
+  stroke-dasharray: 4 4;
+}
+
+.comp-chart-interactive-dot {
+  cursor: pointer;
+  transition: r 0.2s ease, stroke-width 0.2s ease;
+}
+
+.comp-chart-interactive-dot:hover,
+.comp-chart-interactive-dot.active {
+  r: 7;
+  stroke-width: 3.5px;
+}
+
+.comp-chart-tooltip {
+  position: absolute;
+  background: var(--surface);
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  padding: 6px 10px;
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+  font-size: 0.75rem;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 100px;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.comp-chart-tooltip-amount {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.comp-chart-tooltip-date {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
+/* --- Growth Insights Grid --- */
+.comp-insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 1.5rem;
+}
+
+.comp-insight-card {
+  background: var(--surface);
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.comp-insight-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.comp-insight-icon-blue {
+  background-color: rgba(59, 130, 246, 0.08);
+  color: #3b82f6;
+}
+
+.comp-insight-icon-green {
+  background-color: rgba(16, 185, 129, 0.08);
+  color: #10b981;
+}
+
+.comp-insight-icon-orange {
+  background-color: rgba(245, 158, 11, 0.08);
+  color: #f59e0b;
+}
+
+.comp-insight-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.comp-insight-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 1px;
+}
+
+.comp-insight-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* --- Salary Structure Layout --- */
+.comp-structure-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .comp-structure-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.comp-structure-summary-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.comp-struct-hero-card {
+  padding: 16px;
+  border-radius: 12px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.comp-struct-hero-green {
+  background: linear-gradient(135deg, #059669, #10b981);
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.15);
+}
+
+.comp-struct-hero-purple {
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.15);
+}
+
+.comp-struct-hero-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  opacity: 0.9;
+}
+
+.comp-struct-hero-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-top: 4px;
+  line-height: 1.2;
+}
+
+.comp-struct-hero-sub {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+.comp-struct-panel-card {
+  background: var(--surface);
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.comp-struct-panel-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--surface-hover);
+  border: 1px solid hsl(var(--border) / 0.5);
+}
+
+.comp-struct-panel-item-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.comp-struct-panel-item-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.comp-struct-panel-item-value.red {
+  color: #ef4444;
+}
+
+.comp-struct-accordion-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.comp-struct-section-wrapper {
+  background: var(--surface);
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.comp-struct-header-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.2s ease;
+}
+
+.comp-struct-header-btn:hover {
+  background-color: var(--surface-hover);
+}
+
+.comp-struct-title-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.comp-struct-icon-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.comp-struct-title-text {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.comp-struct-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.comp-struct-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.comp-struct-total-val {
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.comp-struct-content {
+  padding: 8px 16px 16px;
+  border-top: 1px solid hsl(var(--border) / 0.5);
+  background-color: var(--bg);
+}
+
+.comp-struct-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.comp-struct-table td {
+  padding: 8px 0;
+  font-size: 0.8rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.4);
+}
+
+.comp-struct-table tr:last-of-type td {
+  border-bottom: none;
+}
+
+.comp-struct-table-label {
+  color: var(--text-secondary);
+}
+
+.comp-struct-table-value {
+  text-align: right;
+  font-weight: 700;
+  color: var(--text);
 }
