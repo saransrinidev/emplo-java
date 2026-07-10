@@ -35,6 +35,9 @@ spring:
       write-dates-as-timestamps: false
     property-naming-strategy: SNAKE_CASE
 
+  cache:
+    type: caffeine
+
 server:
   port: 8000
 

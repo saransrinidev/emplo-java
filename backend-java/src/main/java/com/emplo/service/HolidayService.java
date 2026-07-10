@@ -7,6 +7,8 @@ import com.emplo.exception.NotFoundException;
 import com.emplo.repository.HolidayCalendarRepository;
 import com.emplo.repository.HolidayRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,7 @@ public class HolidayService {
     private final HolidayCalendarRepository calendarRepository;
     private final HolidayRepository holidayRepository;
 
+    @Cacheable(value = "holidays", key = "'calendars_' + #year")
     public List<HolidayCalendar> listCalendars(Integer year) {
         if (year != null) {
             return calendarRepository.findAllByYear(year);
@@ -29,6 +32,7 @@ public class HolidayService {
     }
 
     @Transactional
+    @CacheEvict(value = "holidays", allEntries = true)
     public HolidayCalendar createCalendar(String name, String region, Integer year) {
         if (calendarRepository.findByName(name).isPresent()) {
             throw new BadRequestException("Calendar name already exists");
@@ -39,12 +43,14 @@ public class HolidayService {
     }
 
     @Transactional
+    @CacheEvict(value = "holidays", allEntries = true)
     public void deleteCalendar(UUID id) {
         HolidayCalendar cal = calendarRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Calendar not found"));
         calendarRepository.delete(cal);
     }
 
+    @Cacheable(value = "holidays", key = "'list_' + #calendarId + '_' + #year")
     public List<Holiday> listHolidays(UUID calendarId, Integer year) {
         if (calendarId != null) {
             return holidayRepository.findAllByCalendarIdOrderByHolidayDate(calendarId);
@@ -53,6 +59,7 @@ public class HolidayService {
     }
 
     @Transactional
+    @CacheEvict(value = "holidays", allEntries = true)
     public Holiday addHoliday(UUID calendarId, LocalDate holidayDate, String name, Boolean isOptional) {
         if (calendarRepository.findById(calendarId).isEmpty()) {
             throw new BadRequestException("Calendar not found");
@@ -67,6 +74,7 @@ public class HolidayService {
     }
 
     @Transactional
+    @CacheEvict(value = "holidays", allEntries = true)
     public void removeHoliday(UUID id) {
         Holiday h = holidayRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Holiday not found"));

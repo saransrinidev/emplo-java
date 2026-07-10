@@ -9,6 +9,8 @@ import com.emplo.repository.EmployeeRepository;
 import com.emplo.repository.LeaveBalanceRepository;
 import com.emplo.repository.LeaveTypeEntityRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,11 +27,13 @@ public class LeaveManagementService {
     private final LeaveBalanceRepository leaveBalanceRepository;
     private final EmployeeRepository employeeRepository;
 
+    @Cacheable("leave_types")
     public List<LeaveTypeEntity> listLeaveTypes() {
         return leaveTypeRepository.findAll();
     }
 
     @Transactional
+    @CacheEvict(value = "leave_types", allEntries = true)
     public LeaveTypeEntity createLeaveType(String name, String code, BigDecimal defaultAnnualQuota,
                                             Boolean isPaid, Boolean carryForward) {
         if (leaveTypeRepository.findByCode(code).isPresent()) {
@@ -49,6 +53,7 @@ public class LeaveManagementService {
     }
 
     @Transactional
+    @CacheEvict(value = "leave_types", allEntries = true)
     public LeaveTypeEntity updateLeaveType(UUID id, String name, String code,
                                             BigDecimal defaultAnnualQuota, Boolean isPaid, Boolean carryForward) {
         LeaveTypeEntity lt = leaveTypeRepository.findById(id)
@@ -62,6 +67,7 @@ public class LeaveManagementService {
     }
 
     @Transactional
+    @CacheEvict(value = "leave_types", allEntries = true)
     public void deleteLeaveType(UUID id) {
         LeaveTypeEntity lt = leaveTypeRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Leave type not found"));

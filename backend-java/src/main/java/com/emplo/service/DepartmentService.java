@@ -7,6 +7,8 @@ import com.emplo.exception.NotFoundException;
 import com.emplo.repository.DepartmentRepository;
 import com.emplo.repository.DesignationRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,7 @@ public class DepartmentService {
     private final DepartmentRepository departmentRepository;
     private final DesignationRepository designationRepository;
 
+    @Cacheable(value = "departments", key = "#activeOnly")
     public List<Department> listDepartments(boolean activeOnly) {
         if (activeOnly) {
             return departmentRepository.findAllByIsActiveTrueOrderByName();
@@ -28,6 +31,7 @@ public class DepartmentService {
     }
 
     @Transactional
+    @CacheEvict(value = "departments", allEntries = true)
     public Department createDepartment(String name, String code, UUID headEmployeeId) {
         if (departmentRepository.findByName(name).isPresent()) {
             throw new BadRequestException("Department name already exists");
@@ -45,6 +49,7 @@ public class DepartmentService {
     }
 
     @Transactional
+    @CacheEvict(value = "departments", allEntries = true)
     public Department updateDepartment(UUID id, String name, String code, UUID headEmployeeId, Boolean isActive) {
         Department dept = departmentRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Department not found"));
@@ -66,12 +71,14 @@ public class DepartmentService {
     }
 
     @Transactional
+    @CacheEvict(value = "departments", allEntries = true)
     public void deleteDepartment(UUID id) {
         Department dept = departmentRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Department not found"));
         departmentRepository.delete(dept);
     }
 
+    @Cacheable(value = "designations", key = "#departmentId + '_' + #activeOnly")
     public List<Designation> listDesignations(UUID departmentId, boolean activeOnly) {
         if (departmentId != null && activeOnly) {
             return designationRepository.findAllByDepartmentIdAndIsActiveTrue(departmentId);
