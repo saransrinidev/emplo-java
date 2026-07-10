@@ -41,6 +41,8 @@ public class CacheConfig {
                 Caffeine.newBuilder().maximumSize(100).expireAfterWrite(30, TimeUnit.MINUTES).build());
         manager.registerCustomCache("onboarding_templates",
                 Caffeine.newBuilder().maximumSize(50).expireAfterWrite(15, TimeUnit.MINUTES).build());
+        manager.registerCustomCache("policies",
+                Caffeine.newBuilder().maximumSize(50).expireAfterWrite(10, TimeUnit.MINUTES).build());
         manager.registerCustomCache("dashboard_hr",
                 Caffeine.newBuilder().maximumSize(5).expireAfterWrite(2, TimeUnit.MINUTES).build());
         manager.registerCustomCache("dashboard_employee",

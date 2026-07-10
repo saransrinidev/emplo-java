@@ -77,13 +77,38 @@ function EmployeeOnboarding() {
   }, []);
 
   const handleComplete = async (taskId: string) => {
-    await onboardingApi.completeTask(taskId);
-    load();
+    // Optimistic update for instant feedback
+    const prevTasks = tasks;
+    const prevProgress = progress;
+    const updatedTasks = tasks.map((t) => (t.id === taskId ? { ...t, status: "completed" as const } : t));
+    setTasks(updatedTasks);
+    if (progress) {
+      const newCompleted = progress.completed + 1;
+      setProgress({ ...progress, completed: newCompleted, percentage: Math.round((newCompleted / progress.total) * 100) });
+    }
+    try {
+      await onboardingApi.completeTask(taskId);
+    } catch {
+      setTasks(prevTasks);
+      setProgress(prevProgress);
+    }
   };
 
   const handleSkip = async (taskId: string) => {
-    await onboardingApi.skipTask(taskId);
-    load();
+    const prevTasks = tasks;
+    const prevProgress = progress;
+    const updatedTasks = tasks.map((t) => (t.id === taskId ? { ...t, status: "skipped" as const } : t));
+    setTasks(updatedTasks);
+    if (progress) {
+      const newCompleted = progress.completed + 1;
+      setProgress({ ...progress, completed: newCompleted, percentage: Math.round((newCompleted / progress.total) * 100) });
+    }
+    try {
+      await onboardingApi.skipTask(taskId);
+    } catch {
+      setTasks(prevTasks);
+      setProgress(prevProgress);
+    }
   };
 
   const groupByCategory = (tasksList: OnboardingTask[]) => {

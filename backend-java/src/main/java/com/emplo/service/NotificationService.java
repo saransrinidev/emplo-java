@@ -77,4 +77,14 @@ public class NotificationService {
             }
         }
     }
+
+    /**
+     * Directly notify the user account linked to a given employee ID.
+     * Used for system-initiated notifications (e.g. workflow status changes)
+     * where there's no "actor" to exclude.
+     */
+    public void notifyEmployeeById(UUID employeeId, String title, String message) {
+        userRepository.findByEmployeeId(employeeId).ifPresent(empUser ->
+                createNotification(empUser.getId(), title, message));
+    }
 }

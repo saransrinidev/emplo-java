@@ -1104,3 +1104,207 @@
     padding: 0.5rem 0.5rem;
   }
 }
+
+
+/* ==========================================================================
+   Onboarding Widget — Compact dashboard card
+   ========================================================================== */
+
+.onboarding-widget {
+  background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--card)) 100%);
+  border: 1px solid hsl(var(--border));
+  border-radius: 18px;
+  padding: 1.5rem 1.75rem;
+  margin-bottom: 0.5rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.08);
+}
+
+.onboarding-widget::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #3b82f6, #6366f1);
+}
+
+.onboarding-widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.1rem;
+}
+
+.onboarding-widget-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.onboarding-widget-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(59, 130, 246, 0.3);
+}
+
+.onboarding-widget-title-row h3 {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+  letter-spacing: -0.01em;
+}
+
+.onboarding-widget-title-row p {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.onboarding-widget-ring {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.onboarding-widget-ring-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.onboarding-widget-ring-bg {
+  fill: none;
+  stroke: hsl(var(--muted));
+  stroke-width: 3.5;
+}
+
+.onboarding-widget-ring-fill {
+  fill: none;
+  stroke: #3b82f6;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+.onboarding-widget-ring-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+}
+
+.onboarding-widget-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.onboarding-widget-task {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.onboarding-widget-task:hover {
+  background: hsl(var(--muted) / 0.5);
+}
+
+.onboarding-widget-task-checkbox {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.onboarding-widget-checkbox-circle {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid hsl(var(--border));
+  transition: all 0.15s ease;
+  display: block;
+}
+
+.onboarding-widget-task-checkbox:hover .onboarding-widget-checkbox-circle {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.onboarding-widget-task-icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.onboarding-widget-task-title {
+  flex: 1;
+  font-size: 0.85rem;
+  color: hsl(var(--foreground));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.onboarding-widget-required-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+}
+
+.onboarding-widget-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  border-radius: 10px;
+  background: hsl(var(--muted) / 0.4);
+  color: #3b82f6;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.onboarding-widget-footer:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+@media (max-width: 640px) {
+  .onboarding-widget {
+    padding: 1.25rem;
+  }
+
+  .onboarding-widget-task-title {
+    white-space: normal;
+  }
+}

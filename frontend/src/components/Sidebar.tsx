@@ -21,6 +21,8 @@ import {
   Ticket,
   Moon,
   Sun,
+  Receipt,
+  BookOpen,
 } from "lucide-react";
 import { useAuth, type Role } from "../context/AuthContext";
 import { notificationsApi } from "../api/notifications";
@@ -85,10 +87,24 @@ const NAV_ITEMS: NavItem[] = [
     group: "workspace",
   },
   {
+    to: "/policies",
+    label: "HR Policies",
+    icon: <BookOpen />,
+    roles: ["employee", "manager", "hr_admin"],
+    group: "workspace",
+  },
+  {
     to: "/documents",
     label: "Documents",
     icon: <FileText />,
     roles: ["employee", "manager"],
+    group: "documents_finance",
+  },
+  {
+    to: "/reimbursements",
+    label: "Reimbursements",
+    icon: <Receipt />,
+    roles: ["employee", "manager", "hr_admin"],
     group: "documents_finance",
   },
   {

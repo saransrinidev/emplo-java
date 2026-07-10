@@ -30,6 +30,7 @@ import { certificationsApi, type Certification } from "../api/certifications";
 import { useAuth } from "../context/AuthContext";
 import AsyncState from "../components/AsyncState";
 import MissingDocumentsModal from "../components/MissingDocumentsModal";
+import OnboardingWidget from "../components/OnboardingWidget";
 import { StaggerContainer, StaggerItem, FadeIn, PageTransition } from "../components/Motion";
 import { useApi } from "../hooks/useApi";
 
@@ -396,6 +397,7 @@ function EmployeeDashboard() {
         <>
           <WelcomeBanner taskCount={data.expiring_soon} />
           <div className="dashboard-grid">
+            <OnboardingWidget />
             <StaggerContainer className="grid grid-cards">
               <StaggerItem><Stat title="Designation" value={data.designation || "—"} icon={<Briefcase />} variant="indigo" bgClass="bg-briefcase" description="Your current role" /></StaggerItem>
               <StaggerItem><Stat title="Date of Joining" value={data.date_of_joining || "—"} icon={<Calendar />} variant="blue" bgClass="bg-calendar" description="When you joined the company" /></StaggerItem>

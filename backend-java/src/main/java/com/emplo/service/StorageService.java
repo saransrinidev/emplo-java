@@ -46,8 +46,8 @@ public class StorageService {
             throw new BadRequestException("File is empty");
         }
 
-        if (file.getSize() > 10 * 1024 * 1024) {
-            throw new BadRequestException("File too large. Maximum 10MB.");
+        if (file.getSize() > 20 * 1024 * 1024) {
+            throw new BadRequestException("File too large. Maximum 20MB.");
         }
 
         try {
@@ -84,6 +84,9 @@ public class StorageService {
 
         } catch (BadRequestException e) {
             throw e;
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            log.error("Supabase storage error {}: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw new BadRequestException("Storage upload failed: " + e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error("Storage upload error: {}", e.getMessage());
             throw new BadRequestException("Failed to upload file: " + e.getMessage());
