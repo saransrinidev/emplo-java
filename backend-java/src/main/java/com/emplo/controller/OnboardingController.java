@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Onboarding")
 @RestController
 @RequestMapping("/onboarding")
 @RequiredArgsConstructor

@@ -38,6 +38,21 @@ spring:
   cache:
     type: caffeine
 
+# ─── Swagger / OpenAPI UI ─────────────────────────────────────────────────────
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha        # sort endpoints alphabetically
+    tags-sorter: alpha              # sort tag groups alphabetically
+    display-request-duration: true  # show how long each request took
+    doc-expansion: none             # collapse all tags by default (cleaner)
+    filter: true                    # search box to filter endpoints
+    try-it-out-enabled: true        # enable "Try it out" by default
+    persist-authorization: true     # keep your JWT token across page reloads
+  default-produces-media-type: application/json
+
 server:
   port: 8000
 
