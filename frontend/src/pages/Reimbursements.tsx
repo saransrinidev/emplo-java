@@ -78,9 +78,11 @@ function ClaimCard({
       whileHover={{ y: -2 }}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.2 }}
     >
-      <div className="reimb-card-icon" style={{ backgroundColor: `${catMeta.color}15`, color: catMeta.color }}>
-        <Icon size={18} />
+      <div className="reimb-card-icon" style={{ backgroundColor: `${catMeta.color}12`, color: catMeta.color }}>
+        <Icon size={20} />
       </div>
       <div className="reimb-card-body">
         <div className="reimb-card-top">
@@ -166,8 +168,9 @@ function SubmitClaimModal({ onClose, onSubmitted }: { onClose: () => void; onSub
       <motion.div
         className="reimb-modal"
         onClick={(e) => e.stopPropagation()}
-        initial={{ opacity: 0, scale: 0.96, y: 10 }}
+        initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95 }}
       >
         <div className="reimb-modal-header">
           <div>
@@ -212,14 +215,14 @@ function SubmitClaimModal({ onClose, onSubmitted }: { onClose: () => void; onSub
               <div className="reimb-upload-box">
                 {billUrl ? (
                   <div className="reimb-upload-success">
-                    <FileText size={16} />
-                    <span>Bill uploaded</span>
+                    <FileText size={18} />
+                    <span>Bill uploaded successfully</span>
                     <button onClick={() => setBillUrl("")}><X size={14} /></button>
                   </div>
                 ) : (
                   <label className="reimb-upload-label">
-                    <Upload size={16} />
-                    {uploading ? "Uploading..." : "Choose file"}
+                    <Upload size={18} />
+                    <span>{uploading ? "Uploading..." : "Choose file"}</span>
                     <input type="file" accept="image/*,.pdf" onChange={handleFileUpload} disabled={uploading} hidden />
                   </label>
                 )}
@@ -281,13 +284,14 @@ function ClaimDetailModal({
       <motion.div
         className="reimb-modal reimb-detail-modal"
         onClick={(e) => e.stopPropagation()}
-        initial={{ opacity: 0, scale: 0.96, y: 10 }}
+        initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95 }}
       >
         <div className="reimb-modal-header">
           <div className="reimb-detail-title-row">
-            <div className="reimb-card-icon" style={{ backgroundColor: `${catMeta.color}15`, color: catMeta.color }}>
-              <Icon size={20} />
+            <div className="reimb-card-icon" style={{ backgroundColor: `${catMeta.color}12`, color: catMeta.color }}>
+              <Icon size={22} />
             </div>
             <div>
               <h2>{claim.title}</h2>
@@ -309,11 +313,11 @@ function ClaimDetailModal({
             </div>
             <div className="reimb-detail-stat">
               <span className="reimb-detail-stat-label">Claimant</span>
-              <span className="reimb-detail-stat-value-sm"><UserIcon size={12} /> {claim.claimant_name}</span>
+              <span className="reimb-detail-stat-value-sm"><UserIcon size={14} /> {claim.claimant_name}</span>
             </div>
             <div className="reimb-detail-stat">
               <span className="reimb-detail-stat-label">Expense Date</span>
-              <span className="reimb-detail-stat-value-sm"><Calendar size={12} /> {formatDate(claim.expense_date)}</span>
+              <span className="reimb-detail-stat-value-sm"><Calendar size={14} /> {formatDate(claim.expense_date)}</span>
             </div>
           </div>
 
@@ -328,7 +332,7 @@ function ClaimDetailModal({
             <div className="reimb-detail-section">
               <h4>Attached Bill</h4>
               <a href={claim.bill_url} target="_blank" rel="noreferrer" className="reimb-bill-link">
-                <FileText size={14} /> View receipt
+                <FileText size={16} /> View receipt
               </a>
             </div>
           )}
@@ -336,8 +340,8 @@ function ClaimDetailModal({
           {/* Approval Timeline */}
           <div className="reimb-timeline">
             <div className={`reimb-timeline-step ${claim.status !== "pending" ? "done" : "active"}`}>
-              <span className="reimb-timeline-dot"><UserIcon size={12} /></span>
-              <div>
+              <span className="reimb-timeline-dot"><UserIcon size={14} /></span>
+              <div className="reimb-timeline-info">
                 <span className="reimb-timeline-label">Submitted by Employee</span>
                 <span className="reimb-timeline-date">{formatDate(claim.created_at)}</span>
               </div>
@@ -346,8 +350,8 @@ function ClaimDetailModal({
               claim.status === "pending" ? "" :
               claim.status === "manager_rejected" ? "rejected" : "done"
             }`}>
-              <span className="reimb-timeline-dot"><ShieldCheck size={12} /></span>
-              <div>
+              <span className="reimb-timeline-dot"><ShieldCheck size={14} /></span>
+              <div className="reimb-timeline-info">
                 <span className="reimb-timeline-label">Manager Assurance</span>
                 {claim.manager_acted_at ? (
                   <>
@@ -363,8 +367,8 @@ function ClaimDetailModal({
               ["pending", "manager_approved", "manager_rejected"].includes(claim.status) ? "" :
               claim.status === "hr_rejected" ? "rejected" : "done"
             }`}>
-              <span className="reimb-timeline-dot"><Check size={12} /></span>
-              <div>
+              <span className="reimb-timeline-dot"><Check size={14} /></span>
+              <div className="reimb-timeline-info">
                 <span className="reimb-timeline-label">HR Final Decision</span>
                 {claim.hr_acted_at ? (
                   <>
@@ -378,8 +382,8 @@ function ClaimDetailModal({
             </div>
             {claim.status === "hr_approved" || claim.status === "paid" ? (
               <div className={`reimb-timeline-step ${claim.status === "paid" ? "done" : ""}`}>
-                <span className="reimb-timeline-dot"><Banknote size={12} /></span>
-                <div>
+                <span className="reimb-timeline-dot"><Banknote size={14} /></span>
+                <div className="reimb-timeline-info">
                   <span className="reimb-timeline-label">Payment Processed</span>
                   <span className="reimb-timeline-date">{claim.paid_at ? formatDate(claim.paid_at) : "Pending"}</span>
                 </div>
@@ -388,7 +392,7 @@ function ClaimDetailModal({
           </div>
 
           {(canManagerAct || canHrAct) && (
-            <div className="reimb-field full-width" style={{ marginTop: 16 }}>
+            <div className="reimb-field full-width" style={{ marginTop: 8 }}>
               <label>Remarks (optional)</label>
               <textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} rows={2} placeholder="Add a note..." />
             </div>
@@ -399,26 +403,26 @@ function ClaimDetailModal({
           {canManagerAct && (
             <>
               <button className="reimb-btn-reject" disabled={acting} onClick={() => act(() => reimbursementsApi.managerReject(claim.id, remarks))}>
-                <XCircle size={15} /> Reject
+                <XCircle size={16} /> Reject
               </button>
               <button className="reimb-btn-approve" disabled={acting} onClick={() => act(() => reimbursementsApi.managerApprove(claim.id, remarks))}>
-                <ShieldCheck size={15} /> Give Assurance
+                <ShieldCheck size={16} /> Give Assurance
               </button>
             </>
           )}
           {canHrAct && (
             <>
               <button className="reimb-btn-reject" disabled={acting} onClick={() => act(() => reimbursementsApi.hrReject(claim.id, remarks))}>
-                <XCircle size={15} /> Reject
+                <XCircle size={16} /> Reject
               </button>
               <button className="reimb-btn-approve" disabled={acting} onClick={() => act(() => reimbursementsApi.hrApprove(claim.id, remarks))}>
-                <Check size={15} /> Final Approve
+                <Check size={16} /> Final Approve
               </button>
             </>
           )}
           {canMarkPaid && (
             <button className="reimb-btn-approve" disabled={acting} onClick={() => act(() => reimbursementsApi.markPaid(claim.id))}>
-              <Banknote size={15} /> Mark as Paid
+              <Banknote size={16} /> Mark as Paid
             </button>
           )}
           {!canManagerAct && !canHrAct && !canMarkPaid && (
@@ -473,64 +477,104 @@ export default function Reimbursements() {
 
   return (
     <div className="reimb-page">
+      {/* Redesigned Simple Header */}
       <div className="reimb-header">
         <div>
-          <h1><Receipt size={22} style={{ verticalAlign: "middle", marginRight: 8 }} />Reimbursements</h1>
-          <p>Submit and track expense claims</p>
+          <h1>
+            <Receipt size={24} style={{ marginRight: 8, color: "var(--primary-color)", verticalAlign: "middle" }} />
+            <span>Reimbursements</span>
+          </h1>
+          <p>Submit and track expense claims with manager and HR assurance workflows.</p>
         </div>
         {!isHr && (
           <button className="reimb-btn-primary" onClick={() => setShowSubmit(true)}>
-            <Plus size={16} /> New Claim
+            <Plus size={18} /> New Expense Claim
           </button>
         )}
       </div>
 
+      {/* Redesigned Summary Cards */}
       <div className="reimb-summary-row">
         <div className="reimb-summary-card">
-          <span className="reimb-summary-value">{claims.length}</span>
-          <span className="reimb-summary-label">Total Claims</span>
+          <div className="reimb-summary-card-icon">
+            <FileText size={20} />
+          </div>
+          <div className="reimb-summary-info">
+            <span className="reimb-summary-value">{claims.length}</span>
+            <span className="reimb-summary-label">Total Claims</span>
+          </div>
         </div>
         <div className="reimb-summary-card">
-          <span className="reimb-summary-value" style={{ color: "#d97706" }}>{totalPending}</span>
-          <span className="reimb-summary-label">In Progress</span>
+          <div className="reimb-summary-card-icon">
+            <Clock size={20} />
+          </div>
+          <div className="reimb-summary-info">
+            <span className="reimb-summary-value">{totalPending}</span>
+            <span className="reimb-summary-label">In Progress</span>
+          </div>
         </div>
         <div className="reimb-summary-card">
-          <span className="reimb-summary-value">{money(totalAmount)}</span>
-          <span className="reimb-summary-label">Total Value</span>
+          <div className="reimb-summary-card-icon">
+            <Banknote size={20} />
+          </div>
+          <div className="reimb-summary-info">
+            <span className="reimb-summary-value">{money(totalAmount)}</span>
+            <span className="reimb-summary-label">Total Value</span>
+          </div>
         </div>
       </div>
 
+      {/* Tabs navigation */}
       <div className="reimb-tabs">
-        {!isHr && <button className={`reimb-tab ${tab === "my" ? "active" : ""}`} onClick={() => setTab("my")}>My Claims</button>}
-        {(isManager || isHr) && <button className={`reimb-tab ${tab === "team" ? "active" : ""}`} onClick={() => setTab("team")}>{isHr ? "All Claims" : "Team Claims"}</button>}
-        {isHr && <button className={`reimb-tab ${tab === "hr" ? "active" : ""}`} onClick={() => setTab("hr")}>Awaiting HR Review</button>}
+        {!isHr && (
+          <button className={`reimb-tab ${tab === "my" ? "active" : ""}`} onClick={() => setTab("my")}>
+            My Claims
+          </button>
+        )}
+        {(isManager || isHr) && (
+          <button className={`reimb-tab ${tab === "team" ? "active" : ""}`} onClick={() => setTab("team")}>
+            {isHr ? "All Claims" : "Team Claims"}
+          </button>
+        )}
+        {isHr && (
+          <button className={`reimb-tab ${tab === "hr" ? "active" : ""}`} onClick={() => setTab("hr")}>
+            Awaiting HR Review
+          </button>
+        )}
       </div>
 
+      {/* Claims List */}
       <div className="reimb-list">
-        {loading && <p className="muted" style={{ padding: 24, textAlign: "center" }}>Loading...</p>}
+        {loading && <p className="muted" style={{ padding: 24, textAlign: "center" }}>Loading claims...</p>}
         {!loading && claims.length === 0 && (
           <div className="reimb-empty">
-            <Receipt size={40} />
+            <Receipt size={44} />
             <h3>No claims here</h3>
             <p>{tab === "my" ? "Submit your first expense claim to get started." : "Nothing to review right now."}</p>
           </div>
         )}
-        <AnimatePresence>
-          {claims.map((claim) => (
+        <AnimatePresence mode="popLayout">
+          {!loading && claims.map((claim) => (
             <ClaimCard key={claim.id} claim={claim} onClick={() => setSelected(claim)} />
           ))}
         </AnimatePresence>
       </div>
 
-      {showSubmit && <SubmitClaimModal onClose={() => setShowSubmit(false)} onSubmitted={load} />}
-      {selected && (
-        <ClaimDetailModal
-          claim={selected}
-          role={user?.role || ""}
-          onClose={() => setSelected(null)}
-          onUpdated={load}
-        />
-      )}
+      {/* Modals */}
+      <AnimatePresence>
+        {showSubmit && <SubmitClaimModal onClose={() => setShowSubmit(false)} onSubmitted={load} />}
+      </AnimatePresence>
+      
+      <AnimatePresence>
+        {selected && (
+          <ClaimDetailModal
+            claim={selected}
+            role={user?.role || ""}
+            onClose={() => setSelected(null)}
+            onUpdated={load}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

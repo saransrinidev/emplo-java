@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen, Plus, X, Check, Shield, Calendar, FileText,
   Users, Wallet, Lock, HeartPulse, AlertTriangle, Plane,
-  Home, FileCheck, ChevronRight, Trash2, Edit3, Eye, Info, Upload,
+  Home, FileCheck, ChevronRight, Trash2, Edit3, Upload,
+  CheckCircle2, AlertCircle, FolderHeart, FileClock
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { policiesApi, type Policy, type PolicyCategory } from "../api/policies";
@@ -22,6 +23,16 @@ const CATEGORY_META: Record<PolicyCategory, { label: string; icon: React.Compone
   general: { label: "General", icon: FileText, color: "#6b7280" },
 };
 
+const CATEGORIES_LIST = [
+  { id: "all", label: "All Categories", icon: BookOpen, color: "var(--primary-color)" },
+  ...Object.entries(CATEGORY_META).map(([key, meta]) => ({
+    id: key,
+    label: meta.label,
+    icon: meta.icon,
+    color: meta.color,
+  })),
+];
+
 function formatDate(d: string): string {
   return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
@@ -31,31 +42,40 @@ function formatDate(d: string): string {
 function PolicyCard({ policy, onClick, pending }: { policy: Policy; onClick: () => void; pending?: boolean }) {
   const meta = CATEGORY_META[policy.category];
   const Icon = meta.icon;
+  const excerpt = policy.content.slice(0, 110) + (policy.content.length > 110 ? "..." : "");
+
   return (
     <motion.div
-      className="policy-card"
-      onClick={onClick}
-      whileHover={{ y: -2 }}
+      className="policy-card-wrapper"
+      layout
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.2 }}
     >
-      <div className="policy-card-icon" style={{ backgroundColor: `${meta.color}15`, color: meta.color }}>
-        <Icon size={20} />
-      </div>
-      <div className="policy-card-body">
-        <div className="policy-card-title-row">
-          <span className="policy-card-title">{policy.title}</span>
+      <div className="policy-card" onClick={onClick}>
+        <div className="policy-card-top">
+          <div className="policy-card-icon" style={{ backgroundColor: `${meta.color}12`, color: meta.color }}>
+            <Icon size={22} />
+          </div>
           {pending && <span className="policy-badge-pending">Action Needed</span>}
         </div>
-        <div className="policy-card-meta">
-          <span>{meta.label}</span>
-          <span className="policy-dot">•</span>
-          <span>v{policy.version}</span>
-          <span className="policy-dot">•</span>
-          <span>Updated {formatDate(policy.updated_at)}</span>
+        <div className="policy-card-body">
+          <span className="policy-card-title">{policy.title}</span>
+          <p className="policy-card-excerpt">{excerpt}</p>
+        </div>
+        <div className="policy-card-divider" />
+        <div className="policy-card-footer">
+          <div className="policy-card-meta">
+            <span className="policy-card-category-label">{meta.label}</span>
+            <span className="policy-dot">•</span>
+            <span>v{policy.version}</span>
+          </div>
+          <div className="policy-card-chevron-wrapper">
+            <ChevronRight size={14} />
+          </div>
         </div>
       </div>
-      <ChevronRight size={16} className="policy-card-chevron" />
     </motion.div>
   );
 }
@@ -104,13 +124,14 @@ function PolicyDetailModal({
       <motion.div
         className="policy-modal"
         onClick={(e) => e.stopPropagation()}
-        initial={{ opacity: 0, scale: 0.96, y: 10 }}
+        initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95 }}
       >
         <div className="policy-modal-header">
           <div className="policy-detail-title-row">
-            <div className="policy-card-icon" style={{ backgroundColor: `${meta.color}15`, color: meta.color }}>
-              <Icon size={22} />
+            <div className="policy-card-icon" style={{ backgroundColor: `${meta.color}12`, color: meta.color }}>
+              <Icon size={24} />
             </div>
             <div>
               <h2>{policy.title}</h2>
@@ -121,16 +142,18 @@ function PolicyDetailModal({
         </div>
 
         <div className="policy-modal-body">
-          <div className="policy-content-text">
-            {policy.content.split("\n").map((line, i) => (
-              <p key={i}>{line || "\u00A0"}</p>
-            ))}
+          <div className="policy-content-container">
+            <div className="policy-content-text">
+              {policy.content.split("\n").map((line, i) => (
+                <p key={i}>{line || "\u00A0"}</p>
+              ))}
+            </div>
           </div>
 
           {policy.attachment_url && (
             <div className="policy-pdf-viewer">
               <div className="policy-pdf-header">
-                <FileText size={14} />
+                <FileText size={16} />
                 <span>Attached Document</span>
                 <a href={policy.attachment_url} target="_blank" rel="noreferrer" className="policy-pdf-open-btn">
                   Open in new tab
@@ -155,13 +178,14 @@ function PolicyDetailModal({
           {isHr && stats && (
             <div className="policy-stats-box">
               <div className="policy-stats-header">
-                <Shield size={14} /> Acknowledgement Progress
+                <Shield size={16} style={{ color: "var(--primary-color)" }} />
+                <span>Acknowledgement Progress</span>
               </div>
               <div className="policy-stats-bar">
                 <div className="policy-stats-fill" style={{ width: `${stats.percentage}%` }} />
               </div>
               <div className="policy-stats-numbers">
-                {stats.acknowledged_count} of {stats.total_employees} employees acknowledged ({stats.percentage}%)
+                <strong>{stats.acknowledged_count}</strong> of {stats.total_employees} employees acknowledged ({stats.percentage}%)
               </div>
             </div>
           )}
@@ -170,10 +194,10 @@ function PolicyDetailModal({
         <div className="policy-modal-footer">
           {policy.requires_acknowledgement && !isHr && (
             acknowledged ? (
-              <span className="policy-acknowledged-label"><Check size={15} /> You've acknowledged this policy</span>
+              <span className="policy-acknowledged-label"><CheckCircle2 size={16} /> You've acknowledged this policy</span>
             ) : (
               <button className="policy-btn-primary" onClick={handleAcknowledge} disabled={acking}>
-                <Check size={15} /> {acking ? "Saving..." : "I Acknowledge This Policy"}
+                <Check size={16} /> {acking ? "Saving..." : "I Acknowledge This Policy"}
               </button>
             )
           )}
@@ -259,8 +283,9 @@ function PolicyFormModal({
       <motion.div
         className="policy-modal"
         onClick={(e) => e.stopPropagation()}
-        initial={{ opacity: 0, scale: 0.96, y: 10 }}
+        initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95 }}
       >
         <div className="policy-modal-header">
           <div>
@@ -294,20 +319,20 @@ function PolicyFormModal({
             </div>
             <div className="policy-field full-width">
               <label>Policy Content *</label>
-              <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={10} placeholder="Write the full policy text here..." />
+              <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={8} placeholder="Write the full policy text here..." />
             </div>
             <div className="policy-field full-width">
               <label>Attach Document (PDF)</label>
               <div className="policy-upload-area">
                 {attachmentUrl ? (
                   <div className="policy-upload-done">
-                    <FileText size={16} />
+                    <FileText size={18} />
                     <span>Document attached</span>
                     <button type="button" onClick={() => setAttachmentUrl("")} className="policy-upload-remove"><X size={14} /></button>
                   </div>
                 ) : (
                   <label className="policy-upload-label">
-                    <Upload size={16} />
+                    <Upload size={18} />
                     <span>{uploading ? "Uploading..." : "Choose PDF file"}</span>
                     <input type="file" accept=".pdf,application/pdf,image/*" onChange={handleFileUpload} disabled={uploading} hidden />
                   </label>
@@ -341,6 +366,11 @@ export default function Policies() {
   const [showForm, setShowForm] = useState(false);
   const [editingPolicy, setEditingPolicy] = useState<Policy | undefined>(undefined);
 
+  // Search and filter state
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [showBanner, setShowBanner] = useState(true);
+
   const load = async () => {
     setLoading(true);
     try {
@@ -371,62 +401,269 @@ export default function Policies() {
 
   const pendingIds = new Set(pendingAck.map((p) => p.id));
 
+  // Compute category counts
+  const getCategoryCount = (catId: string) => {
+    if (catId === "all") return policies.length;
+    return policies.filter((p) => p.category === catId).length;
+  };
+
+  // Stats computation
+  const statsTotal = policies.length;
+  const statsPending = pendingAck.length;
+  const statsPublished = policies.filter(p => p.is_published).length;
+  const statsDrafts = policies.filter(p => !p.is_published).length;
+  const statsAcked = policies.filter(p => p.requires_acknowledgement).length - statsPending;
+
+  // Filter policies
+  const filteredPolicies = policies.filter((policy) => {
+    // Category filter
+    const matchesCategory = activeCategory === "all" || policy.category === activeCategory;
+
+    // Status filter
+    let matchesStatus = true;
+    if (!isHr) {
+      if (statusFilter === "pending") {
+        matchesStatus = pendingIds.has(policy.id);
+      } else if (statusFilter === "acknowledged") {
+        matchesStatus = policy.requires_acknowledgement && !pendingIds.has(policy.id);
+      }
+    } else {
+      if (statusFilter === "published") {
+        matchesStatus = policy.is_published;
+      } else if (statusFilter === "drafts") {
+        matchesStatus = !policy.is_published;
+      }
+    }
+
+    return matchesCategory && matchesStatus;
+  });
+
   return (
     <div className="policy-page">
+      {/* Simple Header */}
       <div className="policy-header">
         <div>
-          <h1><BookOpen size={22} style={{ verticalAlign: "middle", marginRight: 8 }} />HR Policies</h1>
-          <p>Company policies, guidelines, and compliance documents</p>
+          <h1>
+            <BookOpen size={24} style={{ marginRight: 8, color: "var(--primary-color)", verticalAlign: "middle" }} />
+            <span>HR Policies</span>
+          </h1>
+          <p>Access our company regulations, compliance standards, and workspace rules.</p>
         </div>
         {isHr && (
           <button className="policy-btn-primary" onClick={() => { setEditingPolicy(undefined); setShowForm(true); }}>
-            <Plus size={16} /> New Policy
+            <Plus size={18} /> Publish New Policy
           </button>
         )}
       </div>
 
-      {!isHr && pendingAck.length > 0 && (
+      {/* Dashboard Quick Stats */}
+      <div className="policy-stats-grid">
+        <div className="policy-stat-card">
+          <div className="policy-stat-icon">
+            <FolderHeart size={20} />
+          </div>
+          <div className="policy-stat-info">
+            <span className="policy-stat-number">{statsTotal}</span>
+            <span className="policy-stat-label">Total Policies</span>
+          </div>
+        </div>
+
+        {!isHr ? (
+          <>
+            <div className="policy-stat-card">
+              <div className="policy-stat-icon" style={{ color: statsPending > 0 ? "#f59e0b" : "inherit" }}>
+                <FileClock size={20} />
+              </div>
+              <div className="policy-stat-info">
+                <span className="policy-stat-number">{statsPending}</span>
+                <span className="policy-stat-label">Action Needed</span>
+              </div>
+            </div>
+            <div className="policy-stat-card">
+              <div className="policy-stat-icon">
+                <CheckCircle2 size={20} />
+              </div>
+              <div className="policy-stat-info">
+                <span className="policy-stat-number">{statsAcked}</span>
+                <span className="policy-stat-label">Acknowledged</span>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="policy-stat-card">
+              <div className="policy-stat-icon">
+                <CheckCircle2 size={20} />
+              </div>
+              <div className="policy-stat-info">
+                <span className="policy-stat-number">{statsPublished}</span>
+                <span className="policy-stat-label">Published</span>
+              </div>
+            </div>
+            <div className="policy-stat-card">
+              <div className="policy-stat-icon">
+                <FileClock size={20} />
+              </div>
+              <div className="policy-stat-info">
+                <span className="policy-stat-number">{statsDrafts}</span>
+                <span className="policy-stat-label">Drafts</span>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Warning banner for pending policies */}
+      {!isHr && pendingAck.length > 0 && showBanner && (
         <div className="policy-alert-banner">
-          <Info size={16} />
-          <span>You have {pendingAck.length} polic{pendingAck.length > 1 ? "ies" : "y"} awaiting your acknowledgement.</span>
+          <AlertCircle size={18} />
+          <span>You have <strong>{pendingAck.length} company policies</strong> awaiting your digital signature acknowledgement.</span>
+          <button className="policy-alert-banner-close" onClick={() => setShowBanner(false)}>
+            <X size={16} />
+          </button>
         </div>
       )}
 
-      <div className="policy-list">
-        {loading && <p className="muted" style={{ padding: 24, textAlign: "center" }}>Loading...</p>}
-        {!loading && policies.length === 0 && (
-          <div className="policy-empty">
-            <BookOpen size={40} />
-            <h3>No policies published yet</h3>
-            <p>{isHr ? "Create your first company policy." : "Check back later for updates."}</p>
-          </div>
-        )}
-        <AnimatePresence>
-          {policies.map((policy) => (
-            <div key={policy.id} className="policy-card-wrapper">
-              <PolicyCard policy={policy} onClick={() => setSelected(policy)} pending={pendingIds.has(policy.id)} />
-              {isHr && (
-                <div className="policy-card-actions">
-                  {!policy.is_published && <span className="policy-draft-tag">Draft</span>}
-                  <button className="policy-action-btn" onClick={(e) => { e.stopPropagation(); setEditingPolicy(policy); setShowForm(true); }}>
-                    <Edit3 size={14} />
+      {/* Split Dashboard Layout */}
+      <div className="policy-dashboard-layout">
+        {/* Left Side Category Navigation */}
+        <aside className="policy-sidebar">
+          <span className="policy-sidebar-title">Categories</span>
+          <ul className="policy-category-list">
+            {CATEGORIES_LIST.map((cat) => {
+              const Icon = cat.icon;
+              const isActive = activeCategory === cat.id;
+              const count = getCategoryCount(cat.id);
+              return (
+                <li key={cat.id}>
+                  <button
+                    className={`policy-category-btn ${isActive ? "active" : ""}`}
+                    onClick={() => setActiveCategory(cat.id)}
+                  >
+                    <span className="policy-category-btn-content">
+                      <Icon size={16} style={{ color: cat.color }} />
+                      <span>{cat.label}</span>
+                    </span>
+                    <span className="policy-category-count">{count}</span>
                   </button>
-                  <button className="policy-action-btn policy-action-danger" onClick={(e) => handleDelete(policy.id, e)}>
-                    <Trash2 size={14} />
+                </li>
+              );
+            })}
+          </ul>
+        </aside>
+
+        {/* Right Side Cards and Controls */}
+        <main className="policy-main">
+          {/* Search and Filters control toolbar */}
+          <div className="policy-controls-row">
+            <div className="policy-filter-tabs">
+              <button
+                className={`policy-filter-tab ${statusFilter === "all" ? "active" : ""}`}
+                onClick={() => setStatusFilter("all")}
+              >
+                All
+              </button>
+              {!isHr ? (
+                <>
+                  <button
+                    className={`policy-filter-tab ${statusFilter === "pending" ? "active" : ""}`}
+                    onClick={() => setStatusFilter("pending")}
+                  >
+                    Needs Action
                   </button>
-                </div>
+                  <button
+                    className={`policy-filter-tab ${statusFilter === "acknowledged" ? "active" : ""}`}
+                    onClick={() => setStatusFilter("acknowledged")}
+                  >
+                    Acknowledged
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    className={`policy-filter-tab ${statusFilter === "published" ? "active" : ""}`}
+                    onClick={() => setStatusFilter("published")}
+                  >
+                    Published
+                  </button>
+                  <button
+                    className={`policy-filter-tab ${statusFilter === "drafts" ? "active" : ""}`}
+                    onClick={() => setStatusFilter("drafts")}
+                  >
+                    Drafts
+                  </button>
+                </>
               )}
             </div>
-          ))}
-        </AnimatePresence>
+          </div>
+
+          {/* Cards Grid */}
+          <div className="policy-list">
+            {loading && <p className="muted" style={{ padding: 24, textAlign: "center" }}>Loading policies...</p>}
+            {!loading && filteredPolicies.length === 0 && (
+              <div className="policy-empty">
+                <BookOpen size={44} />
+                <h3>No policies match your search</h3>
+                <p>Try resetting your filter tabs or searching with another keyword.</p>
+              </div>
+            )}
+
+            <AnimatePresence mode="popLayout">
+              {!loading && filteredPolicies.map((policy) => (
+                <div key={policy.id} className="policy-card-wrapper">
+                  <PolicyCard
+                    policy={policy}
+                    onClick={() => setSelected(policy)}
+                    pending={!isHr && pendingIds.has(policy.id)}
+                  />
+                  {isHr && (
+                    <div className="policy-card-actions">
+                      {!policy.is_published && <span className="policy-draft-tag">Draft</span>}
+                      <button
+                        className="policy-action-btn"
+                        onClick={(e) => { e.stopPropagation(); setEditingPolicy(policy); setShowForm(true); }}
+                        title="Edit Policy"
+                      >
+                        <Edit3 size={14} />
+                      </button>
+                      <button
+                        className="policy-action-btn policy-action-danger"
+                        onClick={(e) => handleDelete(policy.id, e)}
+                        title="Delete Policy"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </AnimatePresence>
+          </div>
+        </main>
       </div>
 
-      {selected && (
-        <PolicyDetailModal policy={selected} isHr={isHr} onClose={() => setSelected(null)} onChanged={load} />
-      )}
-      {showForm && (
-        <PolicyFormModal policy={editingPolicy} onClose={() => setShowForm(false)} onSaved={load} />
-      )}
+      {/* Interactive Detail Modal Reader */}
+      <AnimatePresence>
+        {selected && (
+          <PolicyDetailModal
+            policy={selected}
+            isHr={isHr}
+            onClose={() => setSelected(null)}
+            onChanged={load}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Policy Form Creator Modal */}
+      <AnimatePresence>
+        {showForm && (
+          <PolicyFormModal
+            policy={editingPolicy}
+            onClose={() => setShowForm(false)}
+            onSaved={load}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
