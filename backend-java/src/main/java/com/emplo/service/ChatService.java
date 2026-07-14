@@ -90,8 +90,19 @@ public class ChatService {
             "recipe", "weather", "news", "politics", "religion", "movie", "song", "joke",
             "story", "poem", "translate", "math problem", "calculate", "homework",
             "personal advice", "relationship", "dating", "stock market", "crypto",
-            "hack", "exploit", "bypass", "injection"
+            "hack", "exploit", "bypass", "injection", "2 + 2", "what is the capital"
     );
+
+    private static final String BLOCKED_RESPONSE =
+            "I'm Emplo Assistant — I can only help with questions about the Emplo HR system. " +
+            "Try asking me about:\n\n" +
+            "• How to apply for leave\n" +
+            "• Where to view your salary structure\n" +
+            "• How to upload documents\n" +
+            "• Your onboarding checklist\n" +
+            "• Submitting a reimbursement claim\n" +
+            "• Company HR policies\n\n" +
+            "Ask me anything about Emplo!";
 
     public String chat(User user, String message) {
         if (message == null || message.isBlank()) {
@@ -106,7 +117,7 @@ public class ChatService {
         String lowerMsg = message.toLowerCase();
         for (String blocked : BLOCKED_TOPICS) {
             if (lowerMsg.contains(blocked)) {
-                return "I can only help with questions about the Emplo HR system — things like leave, attendance, salary, documents, onboarding, reimbursements, or how to use features. How can I help you with HR-related topics?";
+                return BLOCKED_RESPONSE;
             }
         }
 
@@ -148,17 +159,47 @@ public class ChatService {
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object> response = restTemplate.postForObject(OPENROUTER_URL, entity, Map.class);
-
-        if (response != null && response.containsKey("choices")) {
+        try {
             @SuppressWarnings("unchecked")
-            List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
-            if (!choices.isEmpty()) {
+            Map<String, Object> response = restTemplate.postForObject(OPENROUTER_URL, entity, Map.class);
+
+            if (response != null && response.containsKey("choices")) {
                 @SuppressWarnings("unchecked")
-                Map<String, Object> msg = (Map<String, Object>) choices.get(0).get("message");
-                return (String) msg.get("content");
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
+                if (!choices.isEmpty()) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> msg = (Map<String, Object>) choices.get(0).get("message");
+                    if (msg != null) {
+                        String content = (String) msg.get("content");
+                        if (content != null && !content.isBlank()) {
+                            return content.trim();
+                        }
+                        // Some models put response in "reasoning_content" or return empty content
+                        String reasoning = (String) msg.get("reasoning_content");
+                        if (reasoning != null && !reasoning.isBlank()) {
+                            return reasoning.trim();
+                        }
+                    }
+                }
             }
+
+            if (response != null && response.containsKey("error")) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> error = (Map<String, Object>) response.get("error");
+                log.error("OpenRouter API error: {}", error);
+                return "AI service returned an error: " + error.getOrDefault("message", "Unknown error");
+            }
+
+            log.warn("OpenRouter unexpected response: {}", response);
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            log.error("OpenRouter HTTP error {}: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            if (e.getStatusCode().value() == 401) {
+                return "AI service authentication failed. Please check the API key configuration.";
+            }
+            if (e.getStatusCode().value() == 429) {
+                return "I'm receiving too many requests right now. Please wait a moment and try again.";
+            }
+            return "AI service error: " + e.getStatusCode();
         }
 
         return "Sorry, I couldn't generate a response. Please try again.";

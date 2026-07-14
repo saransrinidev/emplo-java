@@ -26,20 +26,38 @@ const CATEGORY_META: Record<string, { label: string; icon: React.ComponentType<a
   custom: { label: "Other", icon: Settings, color: "#6b7280" },
 };
 
+const ONBOARDING_COMPLETED_KEY = "emplo_onboarding_completed";
+
 /**
  * Compact onboarding checklist widget for the employee dashboard.
  * Shows overall progress + the next few pending tasks.
- * Hides itself automatically once onboarding is 100% complete.
+ * Hides permanently once onboarding is 100% complete.
+ * Uses localStorage as a fast cache to avoid API calls on repeat visits,
+ * but the server is the source of truth (works across devices).
  */
 export default function OnboardingWidget() {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<OnboardingTask[]>([]);
   const [progress, setProgress] = useState<OnboardingProgress | null>(null);
   const [loading, setLoading] = useState(true);
+  const [dismissed, setDismissed] = useState(() => {
+    return localStorage.getItem(ONBOARDING_COMPLETED_KEY) === "true";
+  });
 
   const load = async () => {
+    // Fast path: if localStorage says done, just verify with server silently
     try {
-      const [t, p] = await Promise.all([onboardingApi.myTasks(), onboardingApi.myProgress()]);
+      const p = await onboardingApi.myProgress();
+      if (p.percentage >= 100 || !p.is_onboarding) {
+        localStorage.setItem(ONBOARDING_COMPLETED_KEY, "true");
+        setDismissed(true);
+        setLoading(false);
+        return;
+      }
+      // Not complete — clear any stale localStorage flag and load tasks
+      localStorage.removeItem(ONBOARDING_COMPLETED_KEY);
+      setDismissed(false);
+      const t = await onboardingApi.myTasks();
       setTasks(t);
       setProgress(p);
     } catch {
@@ -63,7 +81,13 @@ export default function OnboardingWidget() {
     setTasks(updatedTasks);
     if (progress) {
       const newCompleted = progress.completed + 1;
-      setProgress({ ...progress, completed: newCompleted, percentage: Math.round((newCompleted / progress.total) * 100) });
+      const newPercentage = Math.round((newCompleted / progress.total) * 100);
+      setProgress({ ...progress, completed: newCompleted, percentage: newPercentage });
+      // If this was the last task, permanently dismiss
+      if (newPercentage >= 100) {
+        localStorage.setItem(ONBOARDING_COMPLETED_KEY, "true");
+        setDismissed(true);
+      }
     }
     try {
       await onboardingApi.completeTask(taskId);
@@ -71,10 +95,13 @@ export default function OnboardingWidget() {
       // Revert on failure
       setTasks(prevTasks);
       setProgress(prevProgress);
+      localStorage.removeItem(ONBOARDING_COMPLETED_KEY);
+      setDismissed(false);
     }
   };
 
   if (loading) return null;
+  if (dismissed) return null;
   // No tasks assigned at all — don't show the widget
   if (!progress || tasks.length === 0) return null;
   // Fully onboarded — don't clutter the dashboard

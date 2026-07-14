@@ -13,4 +13,6 @@ public interface HolidayRepository extends JpaRepository<Holiday, UUID> {
     List<Holiday> findAllByCalendarId(UUID calendarId);
 
     List<Holiday> findAllByCalendarIdOrderByHolidayDate(UUID calendarId);
+
+    List<Holiday> findAllByHolidayDateBetween(java.time.LocalDate start, java.time.LocalDate end);
 }
