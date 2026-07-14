@@ -30,6 +30,14 @@ public class AttendanceController {
         return ResponseEntity.status(HttpStatus.CREATED).body(attendanceService.applyForLeave(user, dto));
     }
 
+    /** Revise & resubmit a previously rejected leave request (preserves the record). */
+    @PutMapping("/{id}/resubmit")
+    public ResponseEntity<LeaveRequestResponse> resubmitLeave(
+            @PathVariable UUID id, @Valid @RequestBody LeaveRequestCreateDto dto) {
+        User user = currentUserProvider.getCurrentUser();
+        return ResponseEntity.ok(attendanceService.resubmitLeave(user, id, dto));
+    }
+
     @GetMapping("/my")
     public ResponseEntity<List<LeaveRequestResponse>> myLeaveRequests() {
         User user = currentUserProvider.getCurrentUser();

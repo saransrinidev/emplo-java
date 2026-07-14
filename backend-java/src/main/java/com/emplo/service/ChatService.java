@@ -18,11 +18,13 @@ import java.util.Map;
 @Slf4j
 public class ChatService {
 
-    @Value("${app.ollama.url:http://localhost:11434}")
-    private String ollamaUrl;
+    @Value("${app.openrouter.api-key:}")
+    private String apiKey;
 
-    @Value("${app.ollama.model:llama3}")
-    private String ollamaModel;
+    @Value("${app.openrouter.model:meta-llama/llama-3.1-8b-instruct:free}")
+    private String model;
+
+    private static final String OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
     private final EmployeeRepository employeeRepository;
     private final RestTemplate restTemplate = new RestTemplate();
@@ -53,6 +55,8 @@ public class ChatService {
             - Notifications
             - Bank account management
             - Holiday calendar
+            - Reimbursement claims (submit bills, manager assurance, HR approval)
+            - HR Policies (view, acknowledge)
             - Audit logs
             """;
 
@@ -60,7 +64,8 @@ public class ChatService {
             
             USER ROLE: Employee
             They can: view their profile, apply for leave, check-in/out, view salary, upload documents,
-            complete onboarding tasks, raise tickets, message their manager/peers/HR, view their performance reviews.
+            complete onboarding tasks, raise tickets, submit reimbursements, message their manager/peers/HR, 
+            view their performance reviews, read and acknowledge HR policies.
             They CANNOT: manage other employees, approve leave, create salary revisions, or access HR-only features.
             """;
 
@@ -68,7 +73,7 @@ public class ChatService {
             
             USER ROLE: Manager
             They can: everything an employee can do PLUS view team attendance, forward/reject leave requests,
-            assign tasks to direct reports, view team tickets, view team performance.
+            assign tasks to direct reports, give assurance on reimbursement claims, view team tickets.
             They CANNOT: approve leave (only forward to HR), manage salary, or access HR-admin features.
             """;
 
@@ -77,7 +82,7 @@ public class ChatService {
             USER ROLE: HR Admin
             They can: EVERYTHING — manage employees, approve/reject leave, manage salary revisions,
             verify documents, configure departments/holidays/leave types, view audit logs, send alerts,
-            manage onboarding templates, export data, view analytics dashboard.
+            manage onboarding templates, export data, final approve/reject reimbursements, publish HR policies.
             """;
 
     private static final List<String> BLOCKED_TOPICS = List.of(
@@ -85,19 +90,34 @@ public class ChatService {
             "recipe", "weather", "news", "politics", "religion", "movie", "song", "joke",
             "story", "poem", "translate", "math problem", "calculate", "homework",
             "personal advice", "relationship", "dating", "stock market", "crypto",
-            "hack", "exploit", "bypass", "injection"
+            "hack", "exploit", "bypass", "injection", "2 + 2", "what is the capital"
     );
+
+    private static final String BLOCKED_RESPONSE =
+            "I'm Emplo Assistant — I can only help with questions about the Emplo HR system. " +
+            "Try asking me about:\n\n" +
+            "• How to apply for leave\n" +
+            "• Where to view your salary structure\n" +
+            "• How to upload documents\n" +
+            "• Your onboarding checklist\n" +
+            "• Submitting a reimbursement claim\n" +
+            "• Company HR policies\n\n" +
+            "Ask me anything about Emplo!";
 
     public String chat(User user, String message) {
         if (message == null || message.isBlank()) {
             return "Please type a question about the Emplo HR system.";
         }
 
+        if (apiKey == null || apiKey.isBlank()) {
+            return "AI chat is not configured. Please set the OPENROUTER_API_KEY environment variable.";
+        }
+
         // Quick content filter
         String lowerMsg = message.toLowerCase();
         for (String blocked : BLOCKED_TOPICS) {
             if (lowerMsg.contains(blocked)) {
-                return "I can only help with questions about the Emplo HR system — things like leave, attendance, salary, documents, onboarding, or how to use features. How can I help you with HR-related topics?";
+                return BLOCKED_RESPONSE;
             }
         }
 
@@ -112,48 +132,74 @@ public class ChatService {
             systemPrompt += HR_CONTEXT;
         }
 
-        // Add user name context
-        if (user.getEmployeeId() != null) {
-            employeeRepository.findById(user.getEmployeeId()).ifPresent(emp ->
-                    log.debug("Chat from: {} ({})", emp.getFullName(), role));
-        }
-
         try {
-            return callOllama(systemPrompt, message);
+            return callOpenRouter(systemPrompt, message);
         } catch (Exception e) {
-            log.error("Ollama chat error: {}", e.getMessage());
-            return "I'm having trouble connecting to my AI backend. Please make sure Ollama is running (`ollama serve`) and try again.";
+            log.error("OpenRouter chat error: {}", e.getMessage());
+            return "I'm having trouble connecting to the AI service. Please try again in a moment.";
         }
     }
 
-    private String callOllama(String systemPrompt, String userMessage) {
-        String url = ollamaUrl + "/api/chat";
+    private String callOpenRouter(String systemPrompt, String userMessage) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Bearer " + apiKey);
+        headers.set("HTTP-Referer", "http://localhost:8000");
+        headers.set("X-Title", "Emplo HRMS");
 
         Map<String, Object> body = Map.of(
-                "model", ollamaModel,
+                "model", model,
                 "messages", List.of(
                         Map.of("role", "system", "content", systemPrompt),
                         Map.of("role", "user", "content", userMessage)
                 ),
-                "stream", false,
-                "options", Map.of(
-                        "temperature", 0.7,
-                        "num_predict", 300  // Limit response length
-                )
+                "max_tokens", 400,
+                "temperature", 0.7
         );
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object> response = restTemplate.postForObject(url, entity, Map.class);
-
-        if (response != null && response.containsKey("message")) {
+        try {
             @SuppressWarnings("unchecked")
-            Map<String, Object> msg = (Map<String, Object>) response.get("message");
-            return (String) msg.get("content");
+            Map<String, Object> response = restTemplate.postForObject(OPENROUTER_URL, entity, Map.class);
+
+            if (response != null && response.containsKey("choices")) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
+                if (!choices.isEmpty()) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> msg = (Map<String, Object>) choices.get(0).get("message");
+                    if (msg != null) {
+                        String content = (String) msg.get("content");
+                        if (content != null && !content.isBlank()) {
+                            return content.trim();
+                        }
+                        // Some models put response in "reasoning_content" or return empty content
+                        String reasoning = (String) msg.get("reasoning_content");
+                        if (reasoning != null && !reasoning.isBlank()) {
+                            return reasoning.trim();
+                        }
+                    }
+                }
+            }
+
+            if (response != null && response.containsKey("error")) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> error = (Map<String, Object>) response.get("error");
+                log.error("OpenRouter API error: {}", error);
+                return "AI service returned an error: " + error.getOrDefault("message", "Unknown error");
+            }
+
+            log.warn("OpenRouter unexpected response: {}", response);
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            log.error("OpenRouter HTTP error {}: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            if (e.getStatusCode().value() == 401) {
+                return "AI service authentication failed. Please check the API key configuration.";
+            }
+            if (e.getStatusCode().value() == 429) {
+                return "I'm receiving too many requests right now. Please wait a moment and try again.";
+            }
+            return "AI service error: " + e.getStatusCode();
         }
 
         return "Sorry, I couldn't generate a response. Please try again.";

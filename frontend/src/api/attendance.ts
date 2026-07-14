@@ -19,6 +19,7 @@ export interface LeaveRequest {
   updated_at: string;
   employee_name: string | null;
   department: string | null;
+  working_days: number | null;
 }
 
 export const attendanceApi = {
@@ -29,6 +30,14 @@ export const attendanceApi = {
     end_date: string;
     reason?: string;
   }) => api.post<LeaveRequest>("/attendance", data),
+
+  /** Employee: revise & resubmit a rejected request */
+  resubmit: (leaveId: string, data: {
+    leave_type: LeaveType;
+    start_date: string;
+    end_date: string;
+    reason?: string;
+  }) => api.put<LeaveRequest>(`/attendance/${leaveId}/resubmit`, data),
 
   /** Employee: own leave requests */
   myRequests: () => api.get<LeaveRequest[]>("/attendance/my"),
