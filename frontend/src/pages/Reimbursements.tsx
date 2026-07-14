@@ -346,10 +346,9 @@ function ClaimDetailModal({
                 <span className="reimb-timeline-date">{formatDate(claim.created_at)}</span>
               </div>
             </div>
-            <div className={`reimb-timeline-step ${
-              claim.status === "pending" ? "" :
-              claim.status === "manager_rejected" ? "rejected" : "done"
-            }`}>
+            <div className={`reimb-timeline-step ${claim.status === "pending" ? "" :
+                claim.status === "manager_rejected" ? "rejected" : "done"
+              }`}>
               <span className="reimb-timeline-dot"><ShieldCheck size={14} /></span>
               <div className="reimb-timeline-info">
                 <span className="reimb-timeline-label">Manager Assurance</span>
@@ -363,10 +362,9 @@ function ClaimDetailModal({
                 )}
               </div>
             </div>
-            <div className={`reimb-timeline-step ${
-              ["pending", "manager_approved", "manager_rejected"].includes(claim.status) ? "" :
-              claim.status === "hr_rejected" ? "rejected" : "done"
-            }`}>
+            <div className={`reimb-timeline-step ${["pending", "manager_approved", "manager_rejected"].includes(claim.status) ? "" :
+                claim.status === "hr_rejected" ? "rejected" : "done"
+              }`}>
               <span className="reimb-timeline-dot"><Check size={14} /></span>
               <div className="reimb-timeline-info">
                 <span className="reimb-timeline-label">HR Final Decision</span>
@@ -564,7 +562,7 @@ export default function Reimbursements() {
       <AnimatePresence>
         {showSubmit && <SubmitClaimModal onClose={() => setShowSubmit(false)} onSubmitted={load} />}
       </AnimatePresence>
-      
+
       <AnimatePresence>
         {selected && (
           <ClaimDetailModal

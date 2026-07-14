@@ -64,7 +64,7 @@ export default function MyRequests() {
 
   return (
     <div>
-      <PageHeader title={isHr && tab === "all" ? "All Tickets" : "My Requests"} subtitle={isHr && tab === "all" ? "Manage employee requests and tickets." : "Track all your requests and tickets in one place."} />
+      <PageHeader title={isHr && tab === "team" ? "All Tickets" : "My Requests"} subtitle={isHr && tab === "team" ? "Manage employee requests and tickets." : "Track all your requests and tickets in one place."} />
 
       {/* Tab toggle */}
       {(isHr || isManager) && (

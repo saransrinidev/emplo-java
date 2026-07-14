@@ -648,6 +648,7 @@ select option {
   letter-spacing: -0.03em;
   background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   transition: opacity 0.2s ease;
 }
@@ -1418,6 +1419,7 @@ select option {
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -5390,6 +5392,7 @@ select option {
   margin-bottom: 4px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

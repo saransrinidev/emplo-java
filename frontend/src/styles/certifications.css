@@ -15,6 +15,7 @@
     opacity: 0;
     transform: translateY(12px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -175,15 +176,42 @@
 }
 
 /* Dynamic Brand Borders based on class category */
-.cert-card.cat-aws::before { background: linear-gradient(90deg, #ff9900, #ffc87c); }
-.cert-card.cat-microsoft::before, .cert-card.cat-azure::before { background: linear-gradient(90deg, #0078d4, #00a4ef); }
-.cert-card.cat-google::before { background: linear-gradient(90deg, #4285f4, #ea4335, #fbbc05, #34a853); }
-.cert-card.cat-meta::before { background: linear-gradient(90deg, #0064e0, #0080ff); }
-.cert-card.cat-cisco::before { background: linear-gradient(90deg, #1d9fd9, #00bceb); }
-.cert-card.cat-scrum::before { background: linear-gradient(90deg, #0093d0, #005a9c); }
-.cert-card.cat-pmp::before { background: linear-gradient(90deg, #993399, #cc66cc); }
-.cert-card.cat-ibm::before { background: linear-gradient(90deg, #052dec, #006699); }
-.cert-card.cat-coursera::before { background: linear-gradient(90deg, #0056d2, #00368c); }
+.cert-card.cat-aws::before {
+  background: linear-gradient(90deg, #ff9900, #ffc87c);
+}
+
+.cert-card.cat-microsoft::before,
+.cert-card.cat-azure::before {
+  background: linear-gradient(90deg, #0078d4, #00a4ef);
+}
+
+.cert-card.cat-google::before {
+  background: linear-gradient(90deg, #4285f4, #ea4335, #fbbc05, #34a853);
+}
+
+.cert-card.cat-meta::before {
+  background: linear-gradient(90deg, #0064e0, #0080ff);
+}
+
+.cert-card.cat-cisco::before {
+  background: linear-gradient(90deg, #1d9fd9, #00bceb);
+}
+
+.cert-card.cat-scrum::before {
+  background: linear-gradient(90deg, #0093d0, #005a9c);
+}
+
+.cert-card.cat-pmp::before {
+  background: linear-gradient(90deg, #993399, #cc66cc);
+}
+
+.cert-card.cat-ibm::before {
+  background: linear-gradient(90deg, #052dec, #006699);
+}
+
+.cert-card.cat-coursera::before {
+  background: linear-gradient(90deg, #0056d2, #00368c);
+}
 
 .cert-card-header {
   display: flex;
@@ -224,6 +252,7 @@
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -329,9 +358,17 @@
 }
 
 @keyframes cert-laserScan {
-  0% { top: 0%; }
-  50% { top: 100%; }
-  100% { top: 0%; }
+  0% {
+    top: 0%;
+  }
+
+  50% {
+    top: 100%;
+  }
+
+  100% {
+    top: 0%;
+  }
 }
 
 .cert-upload-selected {
@@ -360,7 +397,7 @@
   border-radius: 20px;
   padding: 2rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.01);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.01);
 }
 
 .cert-mode-toggle {
