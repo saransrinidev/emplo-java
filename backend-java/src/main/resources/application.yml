@@ -73,6 +73,6 @@ app:
     url: ${SUPABASE_URL:}
     service-key: ${SUPABASE_SERVICE_KEY:}
     storage-bucket: ${SUPABASE_STORAGE_BUCKET:uploads}
-  ollama:
-    url: ${OLLAMA_URL:http://localhost:11434}
-    model: ${OLLAMA_MODEL:llama3}
+  openrouter:
+    api-key: ${OPENROUTER_API_KEY:}
+    model: ${OPENROUTER_MODEL:meta-llama/llama-3.1-8b-instruct:free}
