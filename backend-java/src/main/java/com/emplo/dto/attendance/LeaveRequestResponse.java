@@ -27,4 +27,5 @@ public class LeaveRequestResponse {
     private Instant updatedAt;
     private String employeeName;
     private String department;
+    private Double workingDays;
 }

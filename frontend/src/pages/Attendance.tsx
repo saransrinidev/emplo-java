@@ -11,6 +11,7 @@ import {
   ChevronRight,
   X,
   CalendarRange,
+  RotateCcw,
 } from "lucide-react";
 import {
   attendanceApi,
@@ -50,6 +51,7 @@ export default function Attendance() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [reviseLeave, setReviseLeave] = useState<LeaveRequest | null>(null);
 
   const isManager = user?.role === "manager";
   const isHR = user?.role === "hr_admin";
@@ -213,10 +215,11 @@ export default function Attendance() {
                     <tr>
                       <th>Type</th>
                       <th>Dates</th>
-                      <th>Days</th>
+                      <th>Working Days</th>
                       <th>Reason</th>
                       <th>Status</th>
                       <th>Remarks</th>
+                      <th style={{ textAlign: "right" }}>Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -228,13 +231,29 @@ export default function Attendance() {
                         <td className="muted" style={{ whiteSpace: "nowrap" }}>
                           {lr.start_date} → {lr.end_date}
                         </td>
-                        <td className="muted">{dayCount(lr.start_date, lr.end_date)}</td>
+                        <td className="muted">
+                          {lr.working_days ?? dayCount(lr.start_date, lr.end_date)}
+                        </td>
                         <td className="muted">{lr.reason || "—"}</td>
                         <td>
                           <LeaveChip status={lr.status} />
                         </td>
                         <td className="muted">
                           {lr.hr_remarks || lr.manager_remarks || "—"}
+                        </td>
+                        <td style={{ textAlign: "right" }}>
+                          {lr.status === "rejected" ? (
+                            <button
+                              className="btn btn-outline btn-sm"
+                              onClick={() => setReviseLeave(lr)}
+                              title="Revise and resubmit this request"
+                            >
+                              <RotateCcw size={14} />
+                              Revise
+                            </button>
+                          ) : (
+                            <span className="muted" style={{ fontSize: 12 }}>—</span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -249,6 +268,168 @@ export default function Attendance() {
       {showCalendar && (
         <CalendarModal leaves={calendarLeaves} onClose={() => setShowCalendar(false)} />
       )}
+
+      {reviseLeave && (
+        <ReviseLeaveModal
+          leave={reviseLeave}
+          onClose={() => setReviseLeave(null)}
+          onSuccess={() => {
+            setReviseLeave(null);
+            refresh();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ─── Revise & Resubmit Modal ─────────────────────────────────────────────── */
+
+function ReviseLeaveModal({
+  leave,
+  onClose,
+  onSuccess,
+}: {
+  leave: LeaveRequest;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    const fd = new FormData(e.currentTarget);
+    const start = fd.get("start_date") as string;
+    const end = fd.get("end_date") as string;
+    if (end < start) {
+      setError("End date must be on or after the start date.");
+      setSubmitting(false);
+      return;
+    }
+    try {
+      await attendanceApi.resubmit(leave.id, {
+        leave_type: fd.get("leave_type") as LeaveType,
+        start_date: start,
+        end_date: end,
+        reason: (fd.get("reason") as string) || undefined,
+      });
+      onSuccess();
+    } catch (err: any) {
+      setError(err?.message ?? "Failed to resubmit request.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
+        <div className="modal-header">
+          <h2 style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <RotateCcw size={18} style={{ color: "var(--primary-color)" }} />
+            Revise & Resubmit
+          </h2>
+          <button className="btn btn-ghost btn-sm" onClick={onClose} aria-label="Close">
+            <X size={18} />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: 20 }}>
+          {leave.hr_remarks || leave.manager_remarks ? (
+            <div
+              className="revise-note"
+              style={{
+                marginBottom: 16,
+                padding: "10px 12px",
+                borderRadius: 8,
+                background: "hsl(var(--muted))",
+                color: "hsl(var(--muted-foreground))",
+                fontSize: 13,
+              }}
+            >
+              <strong style={{ color: "hsl(var(--foreground))" }}>Rejection remarks:</strong>{" "}
+              {leave.hr_remarks || leave.manager_remarks}
+            </div>
+          ) : null}
+
+          {error && <div className="error-text" style={{ marginBottom: 16 }}>{error}</div>}
+
+          <div className="field">
+            <label htmlFor="revise_leave_type">Leave Type</label>
+            <select
+              id="revise_leave_type"
+              name="leave_type"
+              className="input"
+              required
+              defaultValue={leave.leave_type}
+            >
+              {LEAVE_TYPES.map((lt) => (
+                <option key={lt.value} value={lt.value}>
+                  {lt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="att-form-row">
+            <div className="field">
+              <label htmlFor="revise_start_date">Start Date</label>
+              <input
+                id="revise_start_date"
+                type="date"
+                name="start_date"
+                className="input"
+                required
+                defaultValue={leave.start_date}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="revise_end_date">End Date</label>
+              <input
+                id="revise_end_date"
+                type="date"
+                name="end_date"
+                className="input"
+                required
+                defaultValue={leave.end_date}
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label htmlFor="revise_reason">Reason (optional)</label>
+            <textarea
+              id="revise_reason"
+              name="reason"
+              className="input"
+              rows={3}
+              defaultValue={leave.reason ?? ""}
+              placeholder="Add a short note for your manager…"
+              style={{ resize: "vertical", fontFamily: "inherit" }}
+            />
+          </div>
+
+          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+            <button type="submit" className="btn" disabled={submitting}>
+              <Send size={16} />
+              {submitting ? "Resubmitting…" : "Resubmit Request"}
+            </button>
+            <button type="button" className="btn btn-outline" onClick={onClose}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
