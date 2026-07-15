@@ -35,7 +35,14 @@ public class AuthService {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new BadRequestException("Email already registered");
         }
-        Role role = roleRepository.findByName(request.getRole())
+
+        // SECURITY: Public registration is locked to 'employee' role only.
+        // Manager and HR accounts must be created by an existing HR admin via the employee management flow.
+        if (request.getRole() != null && request.getRole() != RoleName.employee) {
+            throw new BadRequestException("Public registration is only available for the 'employee' role. Contact HR for elevated access.");
+        }
+
+        Role role = roleRepository.findByName(RoleName.employee)
                 .orElseThrow(() -> new BadRequestException("Role not found. Seed roles first."));
 
         User user = User.builder()

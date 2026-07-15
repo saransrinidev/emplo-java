@@ -23,6 +23,7 @@ public class PasswordResetService {
     private final PasswordResetTokenRepository tokenRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     private static final long TOKEN_EXPIRY_HOURS = 1;
 
@@ -48,10 +49,10 @@ public class PasswordResetService {
                 .build();
         tokenRepository.save(resetToken);
 
-        return Map.of(
-                "message", "If the email exists, a reset link has been sent.",
-                "token", token // REMOVE in production
-        );
+        // Send token via email (secure — not exposed in API response)
+        emailService.sendPasswordResetEmail(user.getEmail(), token);
+
+        return Map.of("message", "If the email exists, a reset link has been sent.");
     }
 
     @Transactional
