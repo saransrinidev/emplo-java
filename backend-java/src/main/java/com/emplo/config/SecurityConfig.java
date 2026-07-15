@@ -1,6 +1,7 @@
 package com.emplo.config;
 
 import com.emplo.security.JwtAuthenticationFilter;
+import com.emplo.security.RateLimitFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,6 +28,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitFilter rateLimitFilter;
     private final AppProperties appProperties;
 
     @Bean
@@ -36,6 +38,12 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
+            .headers(headers -> headers
+                .contentTypeOptions(opt -> {})  // X-Content-Type-Options: nosniff
+                .frameOptions(frame -> frame.deny())  // X-Frame-Options: DENY
+                .httpStrictTransportSecurity(hsts -> hsts.maxAgeInSeconds(31536000).includeSubDomains(true))
+                .xssProtection(xss -> xss.disable())  // Deprecated; CSP replaces it
+            )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -46,7 +54,8 @@ public class SecurityConfig {
                 .requestMatchers("/password-reset/**").permitAll()
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(rateLimitFilter, jwtAuthenticationFilter.getClass());
 
         return http.build();
     }

@@ -22,6 +22,7 @@ public class NotificationService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final EmployeeRepository employeeRepository;
+    private final EmailService emailService;
 
     public void createNotification(UUID userId, String title, String message) {
         Notification notification = Notification.builder()
@@ -31,6 +32,16 @@ public class NotificationService {
                 .isRead(false)
                 .build();
         notificationRepository.save(notification);
+
+        // Also send email notification
+        userRepository.findById(userId).ifPresent(user -> {
+            String empName = null;
+            if (user.getEmployeeId() != null) {
+                empName = employeeRepository.findById(user.getEmployeeId())
+                        .map(Employee::getFullName).orElse(null);
+            }
+            emailService.sendNotificationEmail(user.getEmail(), empName, title, message);
+        });
     }
 
     /**
