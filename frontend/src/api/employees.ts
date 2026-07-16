@@ -91,4 +91,8 @@ export const employeesApi = {
     api.put<UserAccount>(`/employees/${employeeId}/change-role`, { role }),
 
   terminate: (id: string) => api.delete<void>(`/employees/${id}`),
+
+  restore: (id: string) => api.put<Employee>(`/employees/${id}/restore`),
+
+  listTerminated: () => api.get<Employee[]>("/employees/terminated"),
 };

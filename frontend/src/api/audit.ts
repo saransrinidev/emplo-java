@@ -16,6 +16,16 @@ export interface AuditLogItem {
   created_at: string;
 }
 
+export interface EmployeeAudit {
+  employee_id: string;
+  employee_name: string;
+  actions_by_employee: AuditLogItem[];
+  actions_on_employee: AuditLogItem[];
+  action_summary: Record<string, number>;
+  total_actions_performed: number;
+  total_actions_received: number;
+}
+
 export const auditApi = {
   list: (params?: { entity_type?: string; action?: string; actor_id?: string; limit?: number; offset?: number }) => {
     const qs = new URLSearchParams();
@@ -29,4 +39,5 @@ export const auditApi = {
   },
   actions: () => api.get<string[]>("/audit/actions"),
   entityTypes: () => api.get<string[]>("/audit/entity-types"),
+  employeeAudit: (employeeId: string) => api.get<EmployeeAudit>(`/audit/employee/${employeeId}`),
 };

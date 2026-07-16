@@ -95,6 +95,18 @@ public class EmployeeController {
         employeeService.delete(user, employeeId);
     }
 
+    @PutMapping("/{employeeId}/restore")
+    public ResponseEntity<EmployeeResponse> restoreEmployee(@PathVariable UUID employeeId) {
+        User user = currentUserProvider.getCurrentUser();
+        return ResponseEntity.ok(employeeService.restore(user, employeeId));
+    }
+
+    @GetMapping("/terminated")
+    public ResponseEntity<List<EmployeeResponse>> listTerminated() {
+        User user = currentUserProvider.getCurrentUser();
+        return ResponseEntity.ok(employeeService.listTerminated(user));
+    }
+
     @PutMapping("/{employeeId}/change-role")
     public ResponseEntity<UserAccountResponse> changeRole(
             @PathVariable UUID employeeId,

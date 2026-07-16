@@ -91,3 +91,7 @@ app:
   openrouter:
     api-key: ${OPENROUTER_API_KEY:}
     model: ${OPENROUTER_MODEL:meta-llama/llama-3.1-8b-instruct:free}
+  retention:
+    enabled: ${RETENTION_ENABLED:false}
+    sensitive-documents-years: ${RETENTION_SENSITIVE_DOCS_YEARS:7}
+    personal-data-years: ${RETENTION_PERSONAL_DATA_YEARS:7}

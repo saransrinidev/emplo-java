@@ -19,4 +19,14 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
 
     List<Employee> findAllByFullNameContainingIgnoreCaseOrEmployeeCodeContainingIgnoreCaseOrEmailContainingIgnoreCase(
             String name, String code, String email);
+
+    // Active employees only (soft delete filter)
+    List<Employee> findAllByIsActiveTrue();
+
+    List<Employee> findAllByIsActiveTrueAndManagerId(UUID managerId);
+
+    List<Employee> findAllByIsActiveFalse(); // terminated employees
+
+    List<Employee> findAllByIsActiveTrueAndFullNameContainingIgnoreCaseOrIsActiveTrueAndEmployeeCodeContainingIgnoreCaseOrIsActiveTrueAndEmailContainingIgnoreCase(
+            String name, String code, String email);
 }

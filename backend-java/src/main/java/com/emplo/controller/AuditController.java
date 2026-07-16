@@ -99,4 +99,64 @@ public class AuditController {
                 .map(AuditLog::getEntityType).distinct().sorted().toList();
         return ResponseEntity.ok(types);
     }
+
+    /**
+     * Get audit logs for a specific employee (by their user account's actor_id).
+     * Useful for viewing "what did this person do?" or "what happened to this employee?".
+     */
+    @GetMapping("/employee/{employeeId}")
+    public ResponseEntity<Map<String, Object>> employeeAudit(@PathVariable UUID employeeId) {
+        User user = currentUserProvider.getCurrentUser();
+        authorizationService.requireRole(user, RoleName.hr_admin);
+
+        // Find the user account for this employee
+        UUID actorUserId = userRepository.findByEmployeeId(employeeId)
+                .map(User::getId).orElse(null);
+
+        Employee emp = employeeRepository.findById(employeeId).orElse(null);
+        String empName = emp != null ? emp.getFullName() : "Unknown";
+
+        List<AuditLog> allLogs = auditLogRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        // Logs BY this employee (actions they performed)
+        List<Map<String, Object>> actionsByEmployee = new ArrayList<>();
+        // Logs ABOUT this employee (actions done to their record)
+        List<Map<String, Object>> actionsOnEmployee = new ArrayList<>();
+
+        for (AuditLog log : allLogs) {
+            boolean isActor = actorUserId != null && actorUserId.equals(log.getActorId());
+            boolean isTarget = employeeId.toString().equals(log.getEntityId())
+                    && "employee".equals(log.getEntityType());
+
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("id", log.getId());
+            entry.put("action", log.getAction());
+            entry.put("entity_type", log.getEntityType());
+            entry.put("entity_id", log.getEntityId());
+            entry.put("changes", log.getChanges());
+            entry.put("ip_address", log.getIpAddress());
+            entry.put("created_at", log.getCreatedAt());
+
+            if (isActor) actionsByEmployee.add(entry);
+            if (isTarget) actionsOnEmployee.add(entry);
+        }
+
+        // Categorize actions by type for summary
+        Map<String, Long> categorySummary = new LinkedHashMap<>();
+        for (Map<String, Object> log : actionsByEmployee) {
+            String action = (String) log.get("action");
+            categorySummary.merge(action, 1L, Long::sum);
+        }
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("employee_id", employeeId);
+        response.put("employee_name", empName);
+        response.put("actions_by_employee", actionsByEmployee.stream().limit(50).toList());
+        response.put("actions_on_employee", actionsOnEmployee.stream().limit(50).toList());
+        response.put("action_summary", categorySummary);
+        response.put("total_actions_performed", actionsByEmployee.size());
+        response.put("total_actions_received", actionsOnEmployee.size());
+
+        return ResponseEntity.ok(response);
+    }
 }
