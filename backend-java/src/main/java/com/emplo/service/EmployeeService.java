@@ -16,7 +16,7 @@ import com.emplo.repository.SalaryRevisionRepository;
 import com.emplo.repository.UserRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,8 +25,19 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 
+/**
+ * Employee CRUD, bulk import, login creation, termination.
+ *
+ * OnboardingService and SalaryStructureService are injected @Lazy to break
+ * the circular dependency chain:
+ *   EmployeeService → OnboardingService → NotificationService → EmployeeRepository
+ *   EmployeeService → SalaryStructureService → EmployeeRepository
+ *
+ * These services are only used at the END of the create() method (non-critical
+ * side effects), so lazy initialization is safe — they're resolved on first use,
+ * not at bean creation time.
+ */
 @Service
-@RequiredArgsConstructor
 public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
@@ -43,6 +54,29 @@ public class EmployeeService {
     @PersistenceContext
     private EntityManager entityManager;
 
+    public EmployeeService(
+            EmployeeRepository employeeRepository,
+            UserRepository userRepository,
+            RoleRepository roleRepository,
+            SalaryRevisionRepository salaryRevisionRepository,
+            PasswordEncoder passwordEncoder,
+            AuditService auditService,
+            AuthorizationService authorizationService,
+            NotificationService notificationService,
+            @Lazy OnboardingService onboardingService,
+            @Lazy SalaryStructureService salaryStructureService) {
+        this.employeeRepository = employeeRepository;
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
+        this.salaryRevisionRepository = salaryRevisionRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.auditService = auditService;
+        this.authorizationService = authorizationService;
+        this.notificationService = notificationService;
+        this.onboardingService = onboardingService;
+        this.salaryStructureService = salaryStructureService;
+    }
+
     // ─── List employees ───────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
@@ -58,6 +92,9 @@ public class EmployeeService {
             employees = employeeRepository.findAll();
         }
 
+        // Filter out terminated employees by default
+        employees = employees.stream().filter(e -> e.getIsActive() == null || e.getIsActive()).toList();
+
         // Managers see only their direct reports
         if (currentUser.getRole().getName() == RoleName.manager) {
             if (currentUser.getEmployeeId() == null) {
@@ -70,6 +107,15 @@ public class EmployeeService {
         }
 
         return employees.stream().map(this::toEmployeeResponse).toList();
+    }
+
+    // ─── List terminated employees (HR only) ──────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<EmployeeResponse> listTerminated(User currentUser) {
+        authorizationService.requireRole(currentUser, RoleName.hr_admin);
+        return employeeRepository.findAllByIsActiveFalse().stream()
+                .map(this::toEmployeeResponse).toList();
     }
 
     // ─── List employees with roles (HR only) ─────────────────────────────────────
@@ -419,7 +465,7 @@ public class EmployeeService {
                 .build();
     }
 
-    // ─── Delete (terminate) employee ──────────────────────────────────────────────
+    // ─── Terminate employee (soft delete — preserves all history) ─────────────────
 
     @Transactional
     public void delete(User currentUser, UUID employeeId) {
@@ -428,77 +474,77 @@ public class EmployeeService {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new NotFoundException("Employee not found"));
 
-        // Audit log the termination
-        Map<String, Object> changes = new HashMap<>();
-        changes.put("full_name", employee.getFullName());
-        changes.put("email", employee.getEmail());
-        auditService.logAction(currentUser.getId(), "terminate", "employee", employee.getId().toString(), changes);
+        if (!employee.getIsActive()) {
+            throw new BadRequestException("Employee is already terminated");
+        }
 
-        // 1. Nullify other employees reporting to this one
-        entityManager.createNativeQuery("UPDATE employees SET manager_id = NULL WHERE manager_id = :eid")
+        // Soft-delete: mark as inactive, record who terminated and when
+        employee.setIsActive(false);
+        employee.setEmploymentStatus("Terminated");
+        employee.setTerminatedAt(java.time.Instant.now());
+        employee.setTerminatedBy(currentUser.getId());
+        employeeRepository.save(employee);
+
+        // Reassign direct reports to this employee's manager (or null)
+        entityManager.createNativeQuery("UPDATE employees SET manager_id = :newMgr WHERE manager_id = :eid AND is_active = true")
+                .setParameter("newMgr", employee.getManagerId())
                 .setParameter("eid", employee.getId())
                 .executeUpdate();
 
-        // 2. Nullify leave_requests.manager_id and performance_reviews.reviewer_id
-        entityManager.createNativeQuery("UPDATE leave_requests SET manager_id = NULL WHERE manager_id = :eid")
-                .setParameter("eid", employee.getId())
-                .executeUpdate();
-        entityManager.createNativeQuery("UPDATE performance_reviews SET reviewer_id = NULL WHERE reviewer_id = :eid")
-                .setParameter("eid", employee.getId())
-                .executeUpdate();
-
-        // 3. Delete linked user account and clean up all user FK references
+        // Revoke login access (deactivate user account, don't delete it)
         Optional<User> linkedUserOpt = userRepository.findByEmployeeId(employee.getId());
         if (linkedUserOpt.isPresent()) {
             User linkedUser = linkedUserOpt.get();
-            UUID uid = linkedUser.getId();
-
-            // Nullify all FK references to this user across the system
-            entityManager.createNativeQuery("UPDATE salary_revisions SET created_by = NULL WHERE created_by = :uid")
-                    .setParameter("uid", uid)
-                    .executeUpdate();
-            entityManager.createNativeQuery("UPDATE audit_logs SET actor_id = NULL WHERE actor_id = :uid")
-                    .setParameter("uid", uid)
-                    .executeUpdate();
-            entityManager.createNativeQuery("UPDATE edit_access_requests SET approved_by = NULL WHERE approved_by = :uid")
-                    .setParameter("uid", uid)
-                    .executeUpdate();
-            entityManager.createNativeQuery("UPDATE edit_access_requests SET confirmed_by = NULL WHERE confirmed_by = :uid")
-                    .setParameter("uid", uid)
-                    .executeUpdate();
-            entityManager.createNativeQuery("UPDATE employee_edit_permissions SET granted_by = NULL WHERE granted_by = :uid")
-                    .setParameter("uid", uid)
-                    .executeUpdate();
-            entityManager.createNativeQuery("UPDATE documents SET verified_by = NULL WHERE verified_by = :uid")
-                    .setParameter("uid", uid)
-                    .executeUpdate();
-            entityManager.createNativeQuery("UPDATE tickets SET assigned_to = NULL WHERE assigned_to = :uid")
-                    .setParameter("uid", uid)
-                    .executeUpdate();
-            entityManager.createNativeQuery("UPDATE tickets SET resolved_by = NULL WHERE resolved_by = :uid")
-                    .setParameter("uid", uid)
-                    .executeUpdate();
-            entityManager.createNativeQuery("UPDATE profile_change_requests SET reviewed_by = NULL WHERE reviewed_by = :uid")
-                    .setParameter("uid", uid)
-                    .executeUpdate();
-            entityManager.createNativeQuery("UPDATE leave_requests SET hr_id = NULL WHERE hr_id = :uid")
-                    .setParameter("uid", uid)
-                    .executeUpdate();
-
-            // Delete owned records that won't cascade
-            entityManager.createNativeQuery("DELETE FROM notifications WHERE user_id = :uid")
-                    .setParameter("uid", uid)
-                    .executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM ticket_comments WHERE user_id = :uid")
-                    .setParameter("uid", uid)
-                    .executeUpdate();
-
-            userRepository.delete(linkedUser);
-            entityManager.flush();
+            linkedUser.setIsActive(false);
+            userRepository.save(linkedUser);
         }
 
-        // 4. Delete the employee (cascades to addresses, contacts, docs, certs, leave_requests, etc.)
-        employeeRepository.delete(employee);
+        // Audit log with full context (actor, employee details preserved)
+        Map<String, Object> changes = new HashMap<>();
+        changes.put("full_name", employee.getFullName());
+        changes.put("email", employee.getEmail());
+        changes.put("employee_code", employee.getEmployeeCode());
+        changes.put("department", employee.getDepartment());
+        changes.put("designation", employee.getDesignation());
+        auditService.logAction(currentUser.getId(), "terminate_employee", "employee",
+                employee.getId().toString(), changes);
+
+        // Notify HR team
+        notificationService.notifyHrOnly(currentUser, "Employee Terminated",
+                employee.getFullName() + " (" + employee.getEmployeeCode() + ") has been terminated by "
+                        + currentUser.getEmail() + ".");
+    }
+
+    // ─── Restore a terminated employee ────────────────────────────────────────────
+
+    @Transactional
+    public EmployeeResponse restore(User currentUser, UUID employeeId) {
+        authorizationService.requireRole(currentUser, RoleName.hr_admin);
+
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new NotFoundException("Employee not found"));
+
+        if (employee.getIsActive()) {
+            throw new BadRequestException("Employee is already active");
+        }
+
+        employee.setIsActive(true);
+        employee.setEmploymentStatus("Active");
+        employee.setTerminatedAt(null);
+        employee.setTerminatedBy(null);
+        employee.setTerminationReason(null);
+        employeeRepository.save(employee);
+
+        // Reactivate user account if it exists
+        userRepository.findByEmployeeId(employee.getId()).ifPresent(user -> {
+            user.setIsActive(true);
+            userRepository.save(user);
+        });
+
+        auditService.logAction(currentUser.getId(), "restore_employee", "employee",
+                employee.getId().toString(), Map.of("full_name", employee.getFullName()));
+
+        return toEmployeeResponse(employee);
     }
 
     // ─── Change employee role ─────────────────────────────────────────────────────

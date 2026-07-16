@@ -66,6 +66,20 @@ public class Employee {
     @Column(name = "work_location", length = 100)
     private String workLocation;
 
+    // ─── Soft delete / termination fields ─────────────────────────────────────
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private Boolean isActive = true;
+
+    @Column(name = "terminated_at")
+    private Instant terminatedAt;
+
+    @Column(name = "terminated_by", columnDefinition = "uuid")
+    private UUID terminatedBy;
+
+    @Column(name = "termination_reason", length = 500)
+    private String terminationReason;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "manager_id", insertable = false, updatable = false)
     private Employee manager;
