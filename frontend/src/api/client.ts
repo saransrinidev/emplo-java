@@ -1,14 +1,11 @@
-// Thin wrapper around fetch for talking to the FastAPI backend.
-// During dev, Vite proxies "/api/*" to http://127.0.0.1:8000 (see vite.config.ts).
+// API client for the Emplo backend.
+// Refresh token is stored as an HttpOnly cookie (set by the backend).
+// Only the access token is in localStorage (short-lived, 30 min).
 
 const BASE_URL = "/api";
 
 function getAccessToken(): string | null {
   return localStorage.getItem("access_token");
-}
-
-function getRefreshToken(): string | null {
-  return localStorage.getItem("refresh_token");
 }
 
 export class ApiError extends Error {
@@ -19,26 +16,23 @@ export class ApiError extends Error {
   }
 }
 
-// Attempt to refresh the access token using the stored refresh token.
-// Returns the new access token, or null if refresh failed.
+// Attempt to refresh the access token.
+// The refresh token is sent automatically via HttpOnly cookie (credentials: "include").
 let refreshInFlight: Promise<string | null> | null = null;
 
 async function refreshAccessToken(): Promise<string | null> {
-  const refresh_token = getRefreshToken();
-  if (!refresh_token) return null;
-
-  // De-dupe concurrent refreshes so a burst of 401s triggers only one refresh.
   if (!refreshInFlight) {
     refreshInFlight = fetch(`${BASE_URL}/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh_token }),
+      credentials: "include", // sends the HttpOnly cookie
+      body: JSON.stringify({}), // empty body — backend reads cookie
     })
       .then(async (res) => {
         if (!res.ok) return null;
         const data = await res.json();
         localStorage.setItem("access_token", data.access_token);
-        localStorage.setItem("refresh_token", data.refresh_token);
+        // refresh_token is set as HttpOnly cookie by backend — not stored in JS
         return data.access_token as string;
       })
       .catch(() => null)
@@ -59,7 +53,7 @@ async function rawFetch(
     ...(options.headers as Record<string, string>),
   };
   if (token) headers.Authorization = `Bearer ${token}`;
-  return fetch(`${BASE_URL}${path}`, { ...options, headers });
+  return fetch(`${BASE_URL}${path}`, { ...options, headers, credentials: "include" });
 }
 
 export async function apiFetch<T>(
@@ -69,7 +63,7 @@ export async function apiFetch<T>(
   let res = await rawFetch(path, options, getAccessToken());
 
   // On 401, try a single token refresh and retry the request once.
-  if (res.status === 401 && getRefreshToken()) {
+  if (res.status === 401) {
     const newToken = await refreshAccessToken();
     if (newToken) {
       res = await rawFetch(path, options, newToken);

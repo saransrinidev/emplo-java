@@ -1276,7 +1276,7 @@ function BulkCreateLoginModal({
   onClose: () => void;
 }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [password, setPassword] = useState("Secret123");
+  const [password, setPassword] = useState("");
   const [role, setRole] = useState("employee");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -1420,7 +1420,7 @@ function CreateLoginModal({
   employee: EmployeeWithRole;
   onClose: () => void;
 }) {
-  const [password, setPassword] = useState("Secret123");
+  const [password, setPassword] = useState("");
   const [role, setRole] = useState("employee");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");

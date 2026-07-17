@@ -28,7 +28,6 @@ interface AuthState {
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
 const ACCESS_KEY = "access_token";
-const REFRESH_KEY = "refresh_token";
 const USER_KEY = "cached_user";
 
 // Derive a friendly display name from the email local-part.
@@ -44,13 +43,14 @@ function nameFromEmail(email: string): string {
 
 function storeTokens(tokens: TokenResponse) {
   localStorage.setItem(ACCESS_KEY, tokens.access_token);
-  localStorage.setItem(REFRESH_KEY, tokens.refresh_token);
+  // refresh_token is now handled as an HttpOnly cookie by the backend — not stored in JS
 }
 
 function clearTokens() {
   localStorage.removeItem(ACCESS_KEY);
-  localStorage.removeItem(REFRESH_KEY);
   localStorage.removeItem(USER_KEY);
+  // Also clear legacy refresh_token if it exists from before the migration
+  localStorage.removeItem("refresh_token");
 }
 
 function getCachedUser(): SessionUser | null {

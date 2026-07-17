@@ -3,25 +3,23 @@ spring:
     name: emplo-backend
 
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/hr_portal}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    url: ${DATABASE_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 5
+      maximum-pool-size: ${HIKARI_MAX_POOL:5}
       connection-timeout: 30000
-      # Supabase pooler works best with these settings
       max-lifetime: 1800000
       data-source-properties:
         prepareThreshold: 0
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     open-in-view: false
 

@@ -91,4 +91,9 @@ public class Employee {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    @jakarta.persistence.Version
+    @Column(name = "version", nullable = false)
+    @Builder.Default
+    private Long version = 0L;
 }
