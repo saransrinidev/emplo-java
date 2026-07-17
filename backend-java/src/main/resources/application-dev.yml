@@ -1,0 +1,25 @@
+# Development profile — overrides for local dev only.
+# Activate with: --spring.profiles.active=dev
+# Or set: SPRING_PROFILES_ACTIVE=dev
+
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/hr_portal}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+
+  jpa:
+    hibernate:
+      ddl-auto: update  # Auto-create/update tables in dev (NOT safe for production)
+    show-sql: true
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+# Relaxed security for dev
+app:
+  jwt:
+    secret: ${JWT_SECRET_KEY:dev-only-secret-minimum-32-chars-long-do-not-use-in-prod}
+  retention:
+    enabled: false
